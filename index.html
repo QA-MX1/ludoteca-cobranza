@@ -1,0 +1,4363 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ludoteca de Cobranza</title>
+<meta name="description" content="Tablero de consulta rápida para collectors de Crédito 365: objeciones, extensiones, consecuencias del no pago, enfoque firme y cierre.">
+<script>
+  /* Tema guardado antes de pintar, para evitar parpadeo */
+  (function () {
+    try {
+      var t = localStorage.getItem('ludoteca-tema');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
+<style>
+:root {
+  --font: "DM Sans", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif;
+  --bg: #F4F5FA; --surface: #FFFFFF; --surface-2: #EEF0F7;
+  --ink: #0C122A; --ink-2: #39405F; --muted: #596184;
+  --line: #DEE1EC; --line-2: #C6CADB;
+  --brand: #6948EB; --brand-ink: #4A2BC8; --brand-tint: #EFEBFF;
+  --resp: #6948EB; --resp-tint: #F2EFFF;
+  --alt: #8D93B0;
+  --firm: #BF4F08; --firm-tint: #FFF1E5;
+  --no: #BE1C39; --no-tint: #FDEEF1;
+  --close: #087A5F; --close-tint: #E4F5EE;
+  --warn: #7E5700; --warn-line: #D9A520; --warn-tint: #FFF7DA;
+  --mark: #FFDF6B; --mark-ink: #0C122A;
+  --ph-bg: #E5DEFF; --ph-ink: #3A20AE;
+  --phv-bg: #FFE7A8; --phv-ink: #6A4700;
+  --focus: 0 0 0 3px rgba(105, 72, 235, .45);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C122A; --surface: #131A37; --surface-2: #1B2447;
+    --ink: #EEF0FA; --ink-2: #C5CAE2; --muted: #9CA3C4;
+    --line: #283260; --line-2: #3A4579;
+    --brand: #A08EFF; --brand-ink: #C6BBFF; --brand-tint: rgba(160, 142, 255, .15);
+    --resp: #A08EFF; --resp-tint: rgba(160, 142, 255, .11);
+    --alt: #7C84AA;
+    --firm: #FFA25E; --firm-tint: rgba(255, 162, 94, .10);
+    --no: #FF7C91; --no-tint: rgba(255, 124, 145, .10);
+    --close: #4CD3A4; --close-tint: rgba(76, 211, 164, .10);
+    --warn: #F6CB5C; --warn-line: #C99A22; --warn-tint: rgba(246, 203, 92, .10);
+    --mark: rgba(255, 214, 82, .42); --mark-ink: #FFFFFF;
+    --ph-bg: rgba(160, 142, 255, .24); --ph-ink: #DCD3FF;
+    --phv-bg: rgba(246, 203, 92, .22); --phv-ink: #FFE29A;
+    --focus: 0 0 0 3px rgba(160, 142, 255, .55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0C122A; --surface: #131A37; --surface-2: #1B2447;
+  --ink: #EEF0FA; --ink-2: #C5CAE2; --muted: #9CA3C4;
+  --line: #283260; --line-2: #3A4579;
+  --brand: #A08EFF; --brand-ink: #C6BBFF; --brand-tint: rgba(160, 142, 255, .15);
+  --resp: #A08EFF; --resp-tint: rgba(160, 142, 255, .11);
+  --alt: #7C84AA;
+  --firm: #FFA25E; --firm-tint: rgba(255, 162, 94, .10);
+  --no: #FF7C91; --no-tint: rgba(255, 124, 145, .10);
+  --close: #4CD3A4; --close-tint: rgba(76, 211, 164, .10);
+  --warn: #F6CB5C; --warn-line: #C99A22; --warn-tint: rgba(246, 203, 92, .10);
+  --mark: rgba(255, 214, 82, .42); --mark-ink: #FFFFFF;
+  --ph-bg: rgba(160, 142, 255, .24); --ph-ink: #DCD3FF;
+  --phv-bg: rgba(246, 203, 92, .22); --phv-ink: #FFE29A;
+  --focus: 0 0 0 3px rgba(160, 142, 255, .55);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font: 400 17px/1.5 var(--font);
+  color: var(--ink); background: var(--bg);
+  display: flex; flex-direction: column; height: 100dvh; overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; }
+a { color: inherit; }
+:focus-visible { outline: none; box-shadow: var(--focus); border-radius: 8px; }
+svg.i { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+mark { background: var(--mark); color: var(--mark-ink); border-radius: 3px; padding: 0 1px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Encabezado ---------- */
+.top { flex: none; background: var(--surface); border-bottom: 1px solid var(--line); z-index: 5; }
+.top-in {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "brand search tools";
+  gap: 22px; align-items: center; padding: 12px 20px;
+}
+.brand { grid-area: brand; display: flex; align-items: center; gap: 14px; text-decoration: none; color: var(--ink); }
+.logo { display: flex; align-items: center; gap: 5px; font-weight: 750; font-size: 1.12rem; letter-spacing: -.01em; }
+.logo .ring { color: var(--brand); border: 2px solid var(--brand); border-radius: 999px; padding: 0 6px; font-size: .9rem; line-height: 1.4; }
+.brand-txt { display: flex; flex-direction: column; line-height: 1.2; padding-left: 14px; border-left: 1px solid var(--line); }
+.brand-txt strong { font-size: .98rem; font-weight: 700; }
+.brand-txt span { font-size: .8rem; color: var(--muted); }
+.search { grid-area: search; position: relative; max-width: 760px; }
+.search input {
+  width: 100%; height: 54px; border-radius: 12px; border: 2px solid var(--line-2);
+  background: var(--surface); color: var(--ink); font: 500 1.1rem var(--font);
+  padding: 0 96px 0 50px; -webkit-appearance: none; appearance: none;
+}
+.search input::placeholder { color: var(--muted); font-weight: 400; }
+.search input::-webkit-search-cancel-button, .search input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+.search input:focus { outline: none; border-color: var(--brand); box-shadow: var(--focus); }
+.search .s-ico { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+.search .s-ico svg.i { width: 22px; height: 22px; }
+.s-clear {
+  position: absolute; right: 52px; top: 50%; transform: translateY(-50%);
+  border: 0; background: var(--surface-2); color: var(--ink-2); width: 32px; height: 32px; border-radius: 8px;
+  display: none; align-items: center; justify-content: center; cursor: pointer;
+}
+.s-clear.on { display: inline-flex; }
+.s-kbd {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  font: 600 .8rem var(--font); color: var(--muted); border: 1px solid var(--line-2); border-radius: 6px; padding: 2px 8px;
+}
+.tools { grid-area: tools; display: flex; align-items: center; gap: 10px; }
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 44px; min-width: 44px; padding: 0 12px; border-radius: 10px;
+  border: 1px solid var(--line-2); background: var(--surface); color: var(--ink-2); cursor: pointer; font-weight: 600; font-size: .9rem;
+}
+.icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+
+/* ---------- Estructura de 3 paneles ---------- */
+.app {
+  flex: 1; min-height: 0; display: grid;
+  grid-template-columns: 240px 368px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "nav list detail";
+}
+.nav { grid-area: nav; background: var(--surface); border-right: 1px solid var(--line); overflow: auto; padding: 14px 10px 24px; }
+.list { grid-area: list; background: var(--surface); border-right: 1px solid var(--line); overflow: auto; }
+.detail { grid-area: detail; overflow: auto; background: var(--bg); scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { .detail { scroll-behavior: auto; } }
+
+.nav-item {
+  display: flex; align-items: center; gap: 11px; width: 100%; padding: 10px 12px; border-radius: 10px;
+  color: var(--ink-2); font-weight: 600; font-size: .96rem; text-decoration: none; line-height: 1.25;
+}
+.nav-item:hover { background: var(--surface-2); color: var(--ink); }
+.nav-item[aria-current="true"] { background: var(--brand-tint); color: var(--brand-ink); }
+.nav-item .n { margin-left: auto; color: var(--muted); font-size: .82rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.nav-item[aria-current="true"] .n { color: var(--brand-ink); }
+.nav-sep { height: 1px; background: var(--line); margin: 10px 8px; }
+
+/* ---------- Lista ---------- */
+.list-head { position: sticky; top: 0; z-index: 1; background: var(--surface); padding: 18px 20px 14px; border-bottom: 1px solid var(--line); }
+.list-head h2 { margin: 0; font-size: 1.22rem; line-height: 1.25; letter-spacing: -.01em; }
+.list-head p { margin: 4px 0 0; color: var(--muted); font-size: .9rem; line-height: 1.4; }
+.list-head .syn { margin-top: 8px; font-size: .84rem; color: var(--ink-2); }
+.row {
+  display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line);
+  padding: 14px 20px 14px 22px; cursor: pointer; position: relative; text-decoration: none; color: var(--ink);
+}
+.row:hover { background: var(--surface-2); }
+.row[aria-current="true"] { background: var(--brand-tint); }
+.row[aria-current="true"]::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--brand); }
+.row.kb { box-shadow: inset 0 0 0 2px var(--brand); }
+.row-path { display: flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
+.row-path svg.i { width: 15px; height: 15px; color: var(--brand); }
+.row-t { display: block; font-weight: 650; font-size: 1.02rem; line-height: 1.3; }
+.row-s {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  color: var(--muted); font-size: .9rem; line-height: 1.38; margin-top: 3px;
+}
+.row-snip { display: block; color: var(--ink-2); font-size: .9rem; line-height: 1.4; margin-top: 4px; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.badge { font-size: .74rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; line-height: 1.5; }
+.badge.esp { background: var(--warn-tint); color: var(--warn); box-shadow: inset 0 0 0 1px var(--warn-line); }
+.badge.g3m { background: var(--brand-tint); color: var(--brand-ink); }
+.empty { padding: 24px 20px; color: var(--ink-2); }
+.empty p { margin: 0 0 14px; }
+
+/* ---------- Detalle ---------- */
+.d { max-width: 900px; padding: 26px 40px 96px; }
+.back { display: none; margin-bottom: 14px; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: .88rem; color: var(--muted); }
+.crumbs a { color: var(--brand-ink); font-weight: 650; text-decoration: none; }
+.crumbs a:hover { text-decoration: underline; }
+.d-title { font-size: 2rem; line-height: 1.16; letter-spacing: -.018em; font-weight: 750; margin: 8px 0 8px; outline: none; }
+.arq { margin: 0; color: var(--ink-2); font-size: 1.02rem; }
+.arq b { font-weight: 700; color: var(--ink); }
+.sit { margin: 10px 0 0; color: var(--ink-2); font-size: 1.04rem; max-width: 70ch; }
+.d .badges { margin-top: 10px; }
+
+.sec { margin-top: 22px; }
+.lbl { margin: 0 0 8px; font-size: .9rem; font-weight: 750; color: var(--muted); letter-spacing: .005em; }
+.quotes { display: flex; flex-wrap: wrap; gap: 8px; }
+.quote {
+  background: var(--surface); border: 1px solid var(--line-2); border-radius: 16px 16px 16px 4px;
+  padding: 8px 14px; font-size: 1.04rem; line-height: 1.4;
+}
+.quote::before { content: "«"; color: var(--muted); margin-right: 2px; }
+.quote::after { content: "»"; color: var(--muted); margin-left: 2px; }
+
+.blk { margin-top: 18px; border-left: 5px solid var(--c); background: var(--t); border-radius: 6px 14px 14px 6px; padding: 14px 20px 18px; }
+.blk-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; min-height: 36px; }
+.blk-h h3 { margin: 0; font-size: .95rem; font-weight: 800; color: var(--c); letter-spacing: .005em; }
+.script { margin: 0; font-size: 1.3rem; line-height: 1.52; font-weight: 450; color: var(--ink); max-width: 64ch; }
+.script.sm { font-size: 1.13rem; line-height: 1.5; }
+.note { margin: 8px 0 0; font-size: .92rem; color: var(--ink-2); font-style: italic; }
+.tag-lbl { display: block; font-size: .84rem; font-weight: 750; color: var(--ink-2); margin-bottom: 2px; }
+.resp { --c: var(--resp); --t: var(--resp-tint); }
+.firm { --c: var(--firm); --t: var(--firm-tint); }
+.clos { --c: var(--close); --t: var(--close-tint); }
+.alt { --c: var(--muted); --t: var(--surface); }
+.nod { --c: var(--no); --t: var(--no-tint); }
+.cont { --c: var(--brand); --t: var(--surface); }
+.g3b { --c: var(--ink); --t: var(--surface); box-shadow: inset 0 0 0 1px var(--line-2); }
+.g3-tag { display: inline-block; background: var(--ink); color: var(--surface); font-size: .76rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; margin-right: 8px; vertical-align: 1px; }
+.blk.alt .sub + .sub, .blk.clos .sub + .sub, .frases .sub + .sub { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 12px; }
+.sub-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.sub-row > div { min-width: 0; }
+
+.copy {
+  display: inline-flex; align-items: center; gap: 7px; flex: none;
+  border: 1.5px solid var(--c, var(--brand)); color: var(--c, var(--brand)); background: var(--surface);
+  padding: 7px 13px; border-radius: 9px; font-weight: 750; font-size: .88rem; cursor: pointer; white-space: nowrap; line-height: 1.2;
+}
+.copy svg.i { width: 17px; height: 17px; }
+.copy:hover { background: var(--c, var(--brand)); color: var(--surface); }
+.copy.sm { padding: 5px 10px; font-size: .82rem; }
+.copy.done, .copy.done:hover { background: var(--close); border-color: var(--close); color: var(--surface); }
+
+.ph { background: var(--ph-bg); color: var(--ph-ink); border-radius: 6px; padding: 0 4px; font-weight: 650; white-space: nowrap; font-size: .92em; }
+
+.checks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.checks span { display: inline-flex; align-items: center; gap: 5px; font-size: .84rem; font-weight: 700; color: var(--close); background: var(--surface); border: 1px solid var(--line); padding: 3px 10px; border-radius: 999px; }
+.checks svg.i { width: 15px; height: 15px; }
+
+.nod ul { list-style: none; margin: 0; padding: 0; }
+.nod li { display: grid; grid-template-columns: 22px minmax(0, 1fr); column-gap: 10px; padding: 9px 0; }
+.nod li + li { border-top: 1px solid var(--line); }
+.nod .x { color: var(--no); font-weight: 800; font-size: 1.05rem; line-height: 1.45; }
+.nod .f { font-weight: 650; font-size: 1.06rem; line-height: 1.45; }
+.nod .w { grid-column: 2; color: var(--ink-2); font-size: .93rem; margin-top: 1px; }
+
+.aviso { margin-top: 18px; border-radius: 12px; padding: 14px 18px 16px; }
+.aviso h3 { margin: 0; font-size: 1.04rem; font-weight: 800; display: flex; gap: 8px; align-items: center; }
+.aviso p { margin: 6px 0 0; }
+.aviso ol { margin: 10px 0 0; padding-left: 22px; }
+.aviso li { margin: 4px 0; font-size: 1.02rem; }
+.aviso.especial { background: var(--warn-tint); border: 2px solid var(--warn-line); }
+.aviso.especial h3 { color: var(--warn); }
+.aviso.importante { background: var(--no-tint); border: 1px solid var(--no); }
+.aviso.importante h3 { color: var(--no); }
+.aviso.nota { background: var(--brand-tint); }
+.aviso.nota h3 { color: var(--brand-ink); }
+.aviso .frase { margin-top: 12px; background: var(--surface); border-radius: 10px; padding: 10px 14px; }
+
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: st; }
+.steps > li { counter-increment: st; position: relative; padding: 0 0 18px 50px; }
+.steps > li::before {
+  content: counter(st); position: absolute; left: 0; top: 0; width: 34px; height: 34px; border-radius: 999px;
+  background: var(--brand); color: var(--surface); font-weight: 800; display: grid; place-items: center; font-size: .95rem;
+}
+.steps > li:not(:last-child)::after { content: ""; position: absolute; left: 16px; top: 38px; bottom: 4px; width: 2px; background: var(--line-2); }
+.steps h4 { margin: 4px 0 4px; font-size: 1.06rem; font-weight: 750; }
+.steps ul { margin: 2px 0 0; padding-left: 18px; color: var(--ink-2); }
+.steps .stx { margin-top: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.go { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-weight: 700; font-size: .9rem; color: var(--brand-ink); text-decoration: none; }
+.go:hover { text-decoration: underline; }
+
+.card { margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px 18px; }
+.card > .lbl { margin-bottom: 12px; }
+.plain { margin: 0; padding-left: 20px; }
+.plain li { margin: 4px 0; }
+
+.guia-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 22px; padding: 14px 0; }
+.guia-row + .guia-row { border-top: 1px solid var(--line); }
+.g-h { display: flex; align-items: center; gap: 6px; font-size: .84rem; font-weight: 800; margin-bottom: 4px; }
+.g-si .g-h { color: var(--close); }
+.g-no .g-h { color: var(--no); }
+.g-txt { font-size: 1.08rem; line-height: 1.45; }
+.g-pq { grid-column: 1 / -1; color: var(--ink-2); font-size: .93rem; }
+.g-pq b { font-weight: 750; }
+
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--ink);
+  background: var(--surface); border: 1.5px solid var(--line-2); border-radius: 999px; padding: 7px 14px; font-weight: 600; font-size: .95rem;
+}
+.pill:hover { border-color: var(--brand); color: var(--brand-ink); }
+
+/* ---------- Inicio ---------- */
+.home h1 { font-size: 2.05rem; line-height: 1.15; letter-spacing: -.02em; margin: 6px 0 6px; }
+.home .lead { margin: 0; color: var(--ink-2); font-size: 1.06rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.chip {
+  border: 1.5px solid var(--line-2); background: var(--surface); color: var(--ink); text-decoration: none;
+  padding: 11px 17px; border-radius: 14px 14px 14px 4px; font-size: 1.03rem; font-weight: 600; cursor: pointer; line-height: 1.25;
+}
+.chip:hover { border-color: var(--brand); color: var(--brand-ink); }
+.flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; counter-reset: fl; }
+.flow li { counter-increment: fl; }
+.flow a {
+  display: flex; flex-direction: column; gap: 8px; height: 100%; text-decoration: none; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--brand); border-radius: 6px 6px 12px 12px; padding: 12px 14px;
+  font-weight: 700; font-size: .98rem; line-height: 1.3;
+}
+.flow a::before { content: counter(fl); font-size: .82rem; color: var(--brand-ink); font-weight: 800; }
+.flow a:hover { border-color: var(--brand); }
+.remind { list-style: none; margin: 0; padding: 0; }
+.remind li + li { border-top: 1px solid var(--line); }
+.remind a { display: flex; align-items: center; gap: 10px; padding: 11px 2px; text-decoration: none; color: var(--ink); font-weight: 600; font-size: 1.03rem; }
+.remind a:hover { color: var(--brand-ink); }
+.remind svg.i { color: var(--close); }
+.g3-box { margin-top: 26px; display: flex; gap: 14px; align-items: flex-start; background: var(--brand-tint); border-radius: 14px; padding: 16px 18px; }
+.g3-box p { margin: 0; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: .95rem;
+  transition: opacity .16s, transform .16s; z-index: 50;
+}
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+
+/* ---------- Tablet ---------- */
+@media (max-width: 1279px) {
+  .app { grid-template-columns: 330px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "nav nav" "list detail"; }
+  .nav { display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden; padding: 8px 14px; border-right: 0; border-bottom: 1px solid var(--line); scrollbar-width: thin; }
+  .nav-item { width: auto; white-space: nowrap; padding: 8px 13px; border: 1px solid var(--line); border-radius: 999px; font-size: .9rem; gap: 7px; }
+  .nav-item svg.i { width: 17px; height: 17px; }
+  .nav-item .n { margin-left: 2px; }
+  .nav-sep { display: none; }
+  .d { padding: 22px 28px 90px; }
+  .script { font-size: 1.22rem; }
+  .flow { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .brand-txt span { display: none; }
+  .icon-btn .t { display: none; }
+}
+@media (max-width: 1023px) {
+  .top-in { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "brand tools" "search search"; gap: 10px 16px; padding: 10px 16px 12px; }
+  .search { max-width: none; }
+  .app { grid-template-columns: 290px minmax(0, 1fr); }
+}
+/* ---------- Móvil / tablet vertical ---------- */
+@media (max-width: 759px) {
+  body { font-size: 16px; }
+  .top-in { gap: 10px; padding: 10px 14px 12px; }
+  .brand-txt { display: none; }
+  .s-kbd { display: none; }
+  .s-clear { right: 10px; }
+  .search input { padding-right: 52px; }
+  .app { grid-template-columns: minmax(0, 1fr); grid-template-areas: "nav" "pane"; }
+  .list, .detail { grid-area: pane; border-right: 0; }
+  body.v-list .detail { display: none; }
+  body:not(.v-list) .list { display: none; }
+  .back { display: inline-flex; }
+  .d { padding: 18px 18px 90px; }
+  .d-title { font-size: 1.6rem; }
+  .script { font-size: 1.15rem; }
+  .sub-row, .blk-h { flex-wrap: wrap; }
+  .guia-row { grid-template-columns: minmax(0, 1fr); }
+  .home h1 { font-size: 1.6rem; }
+  .icon-btn .t { display: none; }
+}
+</style>
+</head>
+<body class="v-detail">
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="#/" aria-label="Inicio de la ludoteca">
+      <span class="logo">Crédito <span class="ring">365</span></span>
+      <span class="brand-txt"><strong>Ludoteca de información</strong><span>Cobranza · consulta en llamada</span></span>
+    </a>
+    <div class="search" role="search">
+      <label for="q" class="sr">Buscar lo que dice el cliente</label>
+      <span class="s-ico" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2"/></svg></span>
+      <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Escribe lo que dice el cliente: «no tengo dinero», «ya pagué», «no soy yo»…" aria-controls="list" aria-describedby="q-help">
+      <span id="q-help" class="sr">Resultados en tiempo real. Usa flechas para recorrer y Enter para abrir.</span>
+      <button class="s-clear" type="button" aria-label="Borrar búsqueda"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <kbd class="s-kbd" title="Atajo para buscar">/</kbd>
+    </div>
+    <div class="tools">
+      <button class="icon-btn" id="theme" type="button" aria-label="Cambiar a modo oscuro"></button>
+    </div>
+  </div>
+</header>
+<main class="app">
+  <nav class="nav" id="nav" aria-label="Categorías"></nav>
+  <section class="list" id="list" aria-label="Escenarios"></section>
+  <section class="detail" id="detail" aria-live="off"></section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =====================================================================
+   DATOS DE LA LUDOTECA
+   ---------------------------------------------------------------------
+   Todo el contenido vive en este objeto. Para agregar o editar un
+   escenario, copia uno existente dentro de "escenarios", cambia su "id"
+   (único, sin espacios) y ajusta los campos. Guarda y recarga la página.
+
+   Campos de un escenario:
+     id, categoria (id de una categoría), titulo
+     tipo           "escenario" (por defecto) o "referencia" (guías, flujos)
+     arquetipo      perfil del cliente (opcional)
+     insignia       etiqueta corta junto al título, p. ej. "Caso especial" (opcional)
+     situacion      contexto breve
+     clienteDice    ["frase textual", ...]
+     respuesta      script modelo
+     alternativas   [script, ...]
+     firme          script de variante firme, o null si no hay
+     soloG3         script que cita un artículo del Código de Comercio (se muestra como «Solo G3»)
+     firmeNota      texto que reemplaza la variante firme cuando no aplica
+     noDecir        [{ "frase": "...", "porque": "..." }, ...]
+     cierre         script o [script, ...] pidiendo fecha y hora
+     cierreTitulo   título propio para el bloque de cierre (opcional)
+     avisos         [{ "tipo": "especial|importante|nota", "titulo", "texto", "pasos": [...], "frase" }]
+     bloques        [{ "tipo": "pasos|frases|lista|guia", "titulo", "items": [...] }]
+     contraste      texto (consecuencias vs. extensión)
+     aplicaEn, relacionados   [ids de otros escenarios]
+     etiquetas      palabras clave y frases coloquiales para el buscador
+   Un "script" puede ser texto o { "texto", "etiqueta", "nota" }.
+   Escribe datos variables entre corchetes: [nombre], [fecha], [hora].
+   ===================================================================== */
+const LUDOTECA = {
+  "meta": {
+    "titulo": "Ludoteca de información",
+    "subtitulo": "Cobranza · consulta rápida en llamada",
+    "aviso": "Las menciones de artículos del Código de Comercio (Art. 78, 83 y 389) son exclusivas para collectors G3."
+  },
+  "categorias": [
+    {
+      "id": "apertura",
+      "nombre": "Apertura y flujo",
+      "descripcion": "Saludo, verificación, sondeo y el mapa de la llamada.",
+      "icono": "phone"
+    },
+    {
+      "id": "terceros",
+      "nombre": "Terceros",
+      "descripcion": "Cuando contesta otra persona: identificación, parentesco y recado.",
+      "icono": "users"
+    },
+    {
+      "id": "objeciones",
+      "nombre": "Objeciones por arquetipo",
+      "descripcion": "Lo que dice el cliente y cómo llevarlo a un pago en la misma llamada.",
+      "icono": "chat"
+    },
+    {
+      "id": "extensiones",
+      "nombre": "Extensiones y beneficios",
+      "descripcion": "Cómo ofrecer la extensión y responder dudas sobre ella.",
+      "icono": "calendar"
+    },
+    {
+      "id": "consecuencias",
+      "nombre": "Consecuencias del no pago",
+      "descripcion": "Consecuencias reales, cómo decirlas y su contraste con la extensión.",
+      "icono": "alert"
+    },
+    {
+      "id": "firme",
+      "nombre": "Enfoque firme",
+      "descripcion": "Mora alta: firmeza sin amenazas.",
+      "icono": "shield"
+    },
+    {
+      "id": "cierre",
+      "nombre": "Cierre y promesa de pago",
+      "descripcion": "Asegura fecha, hora, monto y medio de pago.",
+      "icono": "check"
+    },
+    {
+      "id": "guias",
+      "nombre": "Guías sí decir / no decir",
+      "descripcion": "Frases correctas, frases prohibidas y por qué.",
+      "icono": "list"
+    }
+  ],
+  "accesosRapidos": [
+    {
+      "id": "no-tengo-dinero",
+      "texto": "No tengo dinero"
+    },
+    {
+      "id": "ya-pague",
+      "texto": "Ya pagué"
+    },
+    {
+      "id": "no-soy-titular",
+      "texto": "No soy el titular"
+    },
+    {
+      "id": "terceros-script",
+      "texto": "Contesta otra persona"
+    },
+    {
+      "id": "cuando-me-paguen",
+      "texto": "Cuando me paguen"
+    },
+    {
+      "id": "sin-trabajo",
+      "texto": "Me quedé sin trabajo"
+    },
+    {
+      "id": "no-me-llamen",
+      "texto": "Ya no me llamen"
+    },
+    {
+      "id": "no-voy-a-pagar",
+      "texto": "No les voy a pagar"
+    },
+    {
+      "id": "ext-cuanto-cuesta",
+      "texto": "¿Cuánto cuesta la extensión?"
+    },
+    {
+      "id": "ext-lo-voy-a-pensar",
+      "texto": "Lo voy a pensar"
+    },
+    {
+      "id": "promesa-firme",
+      "texto": "Cerrar la promesa"
+    }
+  ],
+  "recordatorios": [
+    {
+      "texto": "Habla del adeudo solo cuando el titular confirme su nombre y apellido.",
+      "ir": "verificacion"
+    },
+    {
+      "texto": "Busca el pago en la misma llamada; evita reagendar contactos.",
+      "ir": "promesa-firme"
+    },
+    {
+      "texto": "Cierra siempre con fecha, hora, monto y medio de pago.",
+      "ir": "promesa-firme"
+    },
+    {
+      "texto": "Firme no es amenazar: no discutas, no amenaces.",
+      "ir": "firme-reglas"
+    }
+  ],
+  "sinonimos": [
+    [
+      "dinero",
+      "lana",
+      "varo",
+      "feria",
+      "efectivo",
+      "plata",
+      "billete",
+      "liquidez",
+      "recursos",
+      "pesos"
+    ],
+    [
+      "trabajo",
+      "chamba",
+      "empleo",
+      "jale",
+      "chambita",
+      "desempleado",
+      "desempleo",
+      "desempleada"
+    ],
+    [
+      "despidieron",
+      "corrieron",
+      "liquidaron",
+      "recortaron",
+      "renuncie"
+    ],
+    [
+      "extension",
+      "prorroga",
+      "plazo",
+      "aplazar",
+      "chance",
+      "alargar",
+      "recorrer",
+      "aplazamiento"
+    ],
+    [
+      "buro",
+      "historial",
+      "score",
+      "boletinado",
+      "boletin",
+      "reporte",
+      "reportan"
+    ],
+    [
+      "denunciar",
+      "denuncia",
+      "demanda",
+      "demandar",
+      "condusef",
+      "profeco",
+      "abogado",
+      "acoso",
+      "acosar",
+      "hostigamiento",
+      "hostigar"
+    ],
+    [
+      "llamen",
+      "llamar",
+      "llamadas",
+      "marquen",
+      "marcar",
+      "molestar",
+      "molesten"
+    ],
+    [
+      "pareja",
+      "esposo",
+      "esposa",
+      "marido",
+      "senora",
+      "mujer",
+      "novio",
+      "novia"
+    ],
+    [
+      "quincena",
+      "nomina",
+      "sueldo",
+      "salario",
+      "depositan",
+      "cobro",
+      "cobre"
+    ],
+    [
+      "intereses",
+      "interes",
+      "cargos",
+      "recargos",
+      "moratorios",
+      "comisiones",
+      "abusivo",
+      "abusivos",
+      "usura"
+    ],
+    [
+      "abono",
+      "abonar",
+      "parcial",
+      "parcialidad",
+      "poquito"
+    ],
+    [
+      "descuento",
+      "rebaja",
+      "quita",
+      "condonacion",
+      "condonar",
+      "perdonar",
+      "promocion"
+    ],
+    [
+      "emergencia",
+      "imprevisto",
+      "enfermo",
+      "enfermedad",
+      "hospital",
+      "accidente",
+      "operacion",
+      "fallecio",
+      "murio",
+      "funeral"
+    ],
+    [
+      "titular",
+      "tercero",
+      "equivocado",
+      "equivocada"
+    ],
+    [
+      "desconfianza",
+      "desconfio",
+      "mentira",
+      "mentiras",
+      "engano",
+      "estafa",
+      "fraude"
+    ],
+    [
+      "pensar",
+      "pienso",
+      "pensarlo",
+      "aviso",
+      "indeciso"
+    ],
+    [
+      "despues",
+      "luego",
+      "proxima",
+      "rato",
+      "adelante"
+    ],
+    [
+      "saludo",
+      "bienvenida",
+      "apertura",
+      "presentacion",
+      "inicio",
+      "hola"
+    ],
+    [
+      "cierre",
+      "despedida",
+      "colgar",
+      "terminar",
+      "finalizar"
+    ],
+    [
+      "legal",
+      "juicio",
+      "juzgado",
+      "embargo",
+      "carcel",
+      "demanda",
+      "abogado"
+    ],
+    [
+      "costo",
+      "precio",
+      "cuesta",
+      "cuanto",
+      "cobran"
+    ],
+    [
+      "firme",
+      "firmeza",
+      "mora alta",
+      "presion"
+    ]
+  ],
+  "escenarios": [
+    {
+      "id": "flujo-llamada",
+      "categoria": "apertura",
+      "tipo": "referencia",
+      "titulo": "Flujo de la llamada",
+      "situacion": "Las cinco etapas de toda llamada. Úsalo como mapa para saber en qué punto vas.",
+      "bloques": [
+        {
+          "tipo": "pasos",
+          "titulo": "Etapas",
+          "items": [
+            {
+              "titulo": "Apertura de la llamada",
+              "puntos": [
+                "Identificar al cliente",
+                "Informar que la llamada está siendo grabada",
+                "Saludo amable",
+                "Identificar el motivo de la llamada"
+              ],
+              "ir": "bienvenida"
+            },
+            {
+              "titulo": "Preguntas de sondeo",
+              "puntos": [
+                "Preguntas para entender la situación del cliente y/o motivos de no pago",
+                "Entender qué tipo de cliente es"
+              ],
+              "ir": "sondeo"
+            },
+            {
+              "titulo": "Solución / negociación",
+              "puntos": [
+                "Solución para el problema del cliente",
+                "Negociación para llegar a un acuerdo de pago"
+              ],
+              "ir": "oferta-extension"
+            },
+            {
+              "titulo": "RECAP: último mensaje",
+              "puntos": [
+                "El último mensaje es lo que se quedará en el cliente, es lo último que pensará: debe ser un mensaje conciso, directo y asertivo."
+              ],
+              "ir": "recap"
+            },
+            {
+              "titulo": "Cierre de la llamada",
+              "puntos": [
+                "Agradecer el tiempo en llamada",
+                "Reiterar tu nombre",
+                "Mencionar datos de contacto"
+              ],
+              "ir": "cierre-llamada"
+            }
+          ]
+        }
+      ],
+      "etiquetas": [
+        "flujo",
+        "etapas",
+        "pasos de la llamada",
+        "orden",
+        "estructura",
+        "como empezar",
+        "proceso",
+        "mapa",
+        "guion"
+      ]
+    },
+    {
+      "id": "bienvenida",
+      "categoria": "apertura",
+      "tipo": "referencia",
+      "titulo": "Script de bienvenida (cliente con atraso)",
+      "situacion": "Primer contacto con el cliente en mora: saluda, preséntate e informa que la llamada se graba.",
+      "respuesta": "Hola, Sr./Sra. [nombre]. Hola, Sr./Sra. [nombre completo], mi nombre es [tu nombre], asesor financiero de Crédito 365. Esta llamada está siendo grabada para fines legales y de calidad.",
+      "avisos": [
+        {
+          "tipo": "nota",
+          "titulo": "Antes de mencionar el monto, confirma que hablas con el titular",
+          "texto": "Continúa solo si la persona confirma con claridad que es el titular, con nombre y apellido.",
+          "frase": "Para confirmar que hablo con la persona correcta, ¿me confirma que usted es el Sr./Sra. [nombre y apellido]?"
+        }
+      ],
+      "bloques": [
+        {
+          "tipo": "frases",
+          "titulo": "Según lo que responda",
+          "items": [
+            {
+              "etiqueta": "Confirma con claridad ser el titular (nombre y apellido)",
+              "texto": "Actualmente usted tiene una deuda de [monto] por [días de atraso]. ¿Cuál fue el motivo principal por el cual no pudo realizar el pago?"
+            },
+            {
+              "etiqueta": "Niega ser el cliente",
+              "texto": "Es necesario confirmar que tengo comunicación directa con el titular. Le informo que este número fue proporcionado y registrado por el Sr./Sra. [nombre completo] durante su proceso de solicitud. ¿El Sr./Sra. [nombre completo] se encuentra disponible para atender la llamada?",
+              "ir": "no-soy-titular"
+            }
+          ]
+        }
+      ],
+      "noDecir": [
+        {
+          "frase": "¿Es usted [nombre], el que debe $[monto]?",
+          "porque": "Primero se verifica y después se habla del adeudo."
+        },
+        {
+          "frase": "Llamo de [empresa] por una deuda de $[monto].",
+          "porque": "Revelar la deuda a un tercero es falta grave."
+        }
+      ],
+      "relacionados": [
+        "verificacion",
+        "no-soy-titular",
+        "terceros-script",
+        "sondeo"
+      ],
+      "etiquetas": [
+        "bienvenida",
+        "saludo",
+        "apertura",
+        "inicio de llamada",
+        "presentacion",
+        "hola",
+        "primer contacto",
+        "llamada grabada",
+        "grabacion",
+        "script inicial",
+        "como saludar",
+        "como empiezo"
+      ]
+    },
+    {
+      "id": "verificacion",
+      "categoria": "apertura",
+      "tipo": "referencia",
+      "titulo": "Verificación de identidad",
+      "situacion": "Antes de hablar del adeudo, quien contesta debe confirmar con claridad que es el titular de la cuenta. Continúa solo si confirma su identidad con nombre y apellido.",
+      "respuesta": "Para confirmar que hablo con la persona correcta, ¿me confirma que usted es el Sr./Sra. [nombre y apellido]?",
+      "alternativas": [
+        {
+          "etiqueta": "Si la respuesta no es clara",
+          "texto": "¿Me puede confirmar su nombre y apellido, por favor?"
+        },
+        {
+          "etiqueta": "Tras confirmar",
+          "texto": "Gracias, ya puedo hablarle con confianza."
+        }
+      ],
+      "noDecir": [
+        {
+          "frase": "¿Es usted [nombre], el que debe $[monto]?",
+          "porque": "Primero se confirma la identidad y después se habla del adeudo."
+        },
+        {
+          "frase": "Continuar con un «sí, dígame» o «¿quién lo busca?».",
+          "porque": "Solo se continúa cuando la persona confirma con claridad que es el titular."
+        },
+        {
+          "frase": "Dar datos del adeudo antes de confirmar la identidad.",
+          "porque": "Protege los datos del cliente."
+        },
+        {
+          "frase": "¿Está seguro que no es usted?",
+          "porque": "Confrontar cierra la llamada."
+        }
+      ],
+      "relacionados": [
+        "no-soy-titular",
+        "terceros-script",
+        "g-identidad"
+      ],
+      "etiquetas": [
+        "verificar",
+        "verificacion",
+        "identidad",
+        "confirmar identidad",
+        "validar identidad",
+        "quien habla",
+        "es el titular",
+        "nombre y apellido",
+        "confirmar nombre",
+        "confirmacion clara",
+        "es usted"
+      ],
+      "avisos": [
+        {
+          "tipo": "importante",
+          "titulo": "Continúa solo con una confirmación clara",
+          "pasos": [
+            "Válida: la persona confirma claramente que es el titular, con su nombre y apellido.",
+            "No válida: «sí, dígame», «¿de parte de quién?», «¿quién lo busca?» o «¿para qué lo quiere?». Vuelve a preguntar.",
+            "Si niega ser el titular o no lo confirma, no hables del adeudo y sigue el script de terceros."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sondeo",
+      "categoria": "apertura",
+      "tipo": "referencia",
+      "titulo": "Preguntas de sondeo",
+      "situacion": "Para entender la situación del cliente y el motivo de no pago, y saber qué tipo de cliente es.",
+      "bloques": [
+        {
+          "tipo": "frases",
+          "titulo": "Preguntas",
+          "items": [
+            "¿Cuándo pasó esto?",
+            "¿Se debió a un gasto inesperado o a un retraso en sus ingresos?",
+            "¿Cuándo considera que su situación podría regularizarse?",
+            "¿Hoy en día cuenta con alguna otra fuente de ingreso?",
+            "Además de lo que me comenta, ¿hay algún otro motivo que haya influido?",
+            "¿Hay alguien que le pueda apoyar con su pago?",
+            {
+              "etiqueta": "Si tiene promesas de pago rotas",
+              "texto": "¿Qué fue lo que le impidió cumplir con los acuerdos anteriores?"
+            },
+            {
+              "etiqueta": "Para iniciar la negociación de extensión",
+              "texto": "Si el pago fuera en otra fecha, ¿le sería posible cumplirlo?"
+            }
+          ]
+        }
+      ],
+      "relacionados": [
+        "aim",
+        "oferta-extension"
+      ],
+      "etiquetas": [
+        "sondeo",
+        "preguntas",
+        "motivo de no pago",
+        "por que no pago",
+        "indagar",
+        "investigar",
+        "causa",
+        "razon",
+        "entender situacion",
+        "que le paso"
+      ]
+    },
+    {
+      "id": "aim",
+      "categoria": "apertura",
+      "tipo": "referencia",
+      "titulo": "Método A.I.M. para cualquier objeción",
+      "situacion": "Acknowledge + Inform + Move on. Sirve para manejar cualquier objeción de forma profesional; también aplica en atención a clientes, ventas o soporte técnico.",
+      "respuesta": "Lamento escuchar que se encuentra sin trabajo. Precisamente por situaciones como esta, buscamos una solución temprana que evite que se generen cargos y dificulten superar esta circunstancia. Un pago mínimo hoy puede evitar que el atraso afecte más su situación. ¿Qué monto realista podría cubrir en este momento?",
+      "bloques": [
+        {
+          "tipo": "pasos",
+          "titulo": "Los tres pasos, con ejemplo",
+          "items": [
+            {
+              "titulo": "Entiende (Acknowledge)",
+              "texto": "Lamento escuchar que se encuentra sin trabajo."
+            },
+            {
+              "titulo": "Informa (Inform)",
+              "texto": "Precisamente por situaciones como esta, buscamos una solución temprana que evite que se generen cargos y dificulten superar esta circunstancia. Un pago mínimo hoy puede evitar que el atraso afecte más su situación."
+            },
+            {
+              "titulo": "Avanza (Move on)",
+              "texto": "¿Qué monto realista podría cubrir en este momento?"
+            }
+          ]
+        }
+      ],
+      "relacionados": [
+        "sin-trabajo"
+      ],
+      "etiquetas": [
+        "aim",
+        "a.i.m",
+        "metodo",
+        "tecnica",
+        "framework",
+        "entiende informa avanza",
+        "acknowledge",
+        "inform",
+        "move on",
+        "cualquier objecion",
+        "como manejar objeciones"
+      ]
+    },
+    {
+      "id": "terceros-script",
+      "categoria": "terceros",
+      "tipo": "referencia",
+      "titulo": "Hablando con una tercera persona",
+      "situacion": "Contesta alguien que dice no ser el cliente. Identifica si es una persona útil (conoce al cliente o tiene alguna relación con él) para dejarle un recado al titular.",
+      "respuesta": "Buenos días/tardes, mi nombre es [nombre del agente], asesor financiero de Crédito 365. Esta llamada está siendo grabada y monitoreada para fines legales y de calidad. ¿Puedo hablar con [nombre del cliente]?",
+      "bloques": [
+        {
+          "tipo": "pasos",
+          "titulo": "Pasos",
+          "items": [
+            {
+              "titulo": "Si es el número del cliente",
+              "puntos": [
+                "Utiliza el argumento de datos biométricos."
+              ]
+            },
+            {
+              "titulo": "Si sigue diciendo que no es el cliente, identifica el parentesco",
+              "texto": "¿Lo conoce? ¿Tiene algún parentesco o relación con esta persona?"
+            },
+            {
+              "titulo": "Si es una persona útil, deja un recado para el titular",
+              "puntos": [
+                "Persona útil: alguien que conozca al cliente o tenga alguna relación con él.",
+                "Este parámetro solo aplica para personas que tengan alguna relación con el titular del préstamo."
+              ],
+              "texto": "Por favor, ¿le puede indicar que nos comunicamos de Crédito 365 y que nos devuelva la llamada a este mismo número?"
+            }
+          ]
+        }
+      ],
+      "noDecir": [
+        {
+          "frase": "Llamo de [empresa] por una deuda de $[monto].",
+          "porque": "Revelar la deuda a un tercero es falta grave."
+        },
+        {
+          "frase": "Dígale que más le vale pagar.",
+          "porque": "Los terceros no tienen que enterarse del adeudo."
+        },
+        {
+          "frase": "Seguro usted sabe dónde está.",
+          "porque": "Presionar a terceros puede generar quejas y sanciones."
+        },
+        {
+          "frase": "Pedir al tercero que pague o se haga responsable.",
+          "porque": "Solo el titular puede responder por el crédito."
+        }
+      ],
+      "cierre": {
+        "etiqueta": "Solo si tiene relación con el titular",
+        "texto": "Por favor, ¿le puede indicar que nos comunicamos de Crédito 365 y que nos devuelva la llamada a este mismo número?"
+      },
+      "relacionados": [
+        "terceros-no-es",
+        "terceros-no-conozco",
+        "no-soy-titular",
+        "g-terceros"
+      ],
+      "etiquetas": [
+        "tercero",
+        "terceros",
+        "tercera persona",
+        "contesta otra persona",
+        "contesta alguien mas",
+        "no es el cliente",
+        "recado",
+        "dejar recado",
+        "mensaje para el titular",
+        "familiar",
+        "parentesco",
+        "relacion",
+        "lo conoce",
+        "datos biometricos",
+        "biometricos",
+        "numero del cliente",
+        "puedo hablar con"
+      ]
+    },
+    {
+      "id": "terceros-no-es",
+      "categoria": "terceros",
+      "tipo": "referencia",
+      "titulo": "“Este no es el cliente” (lo conoce)",
+      "situacion": "La persona confirma que no es el cliente. Valida su relación con él con estas preguntas, en orden.",
+      "clienteDice": [
+        "Este no es el cliente."
+      ],
+      "bloques": [
+        {
+          "tipo": "pasos",
+          "titulo": "Preguntas",
+          "items": [
+            {
+              "titulo": "Relación",
+              "texto": "¿Tiene alguna relación con el cliente?"
+            },
+            {
+              "titulo": "Último contacto",
+              "texto": "¿Cuándo fue la última vez que vio al cliente?"
+            },
+            {
+              "titulo": "Teléfono del cliente",
+              "texto": "¿Cuál es el número de teléfono del cliente?"
+            },
+            {
+              "titulo": "Hora para regresar la llamada",
+              "texto": "¿A qué hora puedo regresarle la llamada al Sr./Sra. [nombre del cliente]? ¿A qué hora está de vuelta?"
+            }
+          ]
+        }
+      ],
+      "noDecir": [
+        {
+          "frase": "Llamo de [empresa] por una deuda de $[monto].",
+          "porque": "Revelar la deuda a un tercero es falta grave."
+        },
+        {
+          "frase": "Dígale que más le vale pagar.",
+          "porque": "Los terceros no tienen que enterarse del adeudo."
+        },
+        {
+          "frase": "Pedir al tercero que pague o se haga responsable.",
+          "porque": "Solo el titular puede responder por el crédito."
+        }
+      ],
+      "cierre": {
+        "etiqueta": "Solo si tiene relación con el titular",
+        "texto": "Por favor, ¿le puede indicar que nos comunicamos de Crédito 365 y que nos devuelva la llamada a este mismo número?"
+      },
+      "relacionados": [
+        "terceros-script",
+        "terceros-no-conozco"
+      ],
+      "etiquetas": [
+        "este no es el cliente",
+        "no es el cliente",
+        "no esta",
+        "no se encuentra",
+        "salio",
+        "esta trabajando",
+        "a que hora regresa",
+        "a que hora esta de vuelta",
+        "ultima vez que lo vio",
+        "telefono del cliente",
+        "relacion con el cliente",
+        "es mi esposo",
+        "es mi esposa",
+        "es mi hijo",
+        "es mi hija",
+        "es mi mama",
+        "es mi papa",
+        "es mi hermano",
+        "es mi familiar"
+      ]
+    },
+    {
+      "id": "terceros-no-conozco",
+      "categoria": "terceros",
+      "tipo": "referencia",
+      "titulo": "“No conozco al cliente”",
+      "situacion": "La persona dice no conocer al cliente. Indaga desde cuándo usa el número y si alguien cercano lo conoce.",
+      "clienteDice": [
+        "No conozco al cliente."
+      ],
+      "avisos": [
+        {
+          "tipo": "nota",
+          "titulo": "Revisa el CRM",
+          "texto": "Verifica las acciones registradas, las extensiones y toda la información disponible para determinar si la persona es o no el titular."
+        }
+      ],
+      "bloques": [
+        {
+          "tipo": "pasos",
+          "titulo": "Preguntas",
+          "items": [
+            {
+              "titulo": "Desde cuándo tiene el número",
+              "texto": "¿Cuándo empezó a utilizar este número de teléfono?"
+            },
+            {
+              "titulo": "Sigue indagando",
+              "texto": "¿Alguien de su trabajo conoce al cliente? ¿Hay alguna persona por su zona con el nombre [nombre del cliente]?"
+            },
+            {
+              "titulo": "El número estaba a nombre del cliente",
+              "texto": "El número estaba registrado a nombre del cliente. ¿Durante cuánto tiempo ha utilizado este número de móvil?"
+            },
+            {
+              "titulo": "Propietario de la línea",
+              "texto": "¿Es usted el propietario del móvil?"
+            }
+          ]
+        }
+      ],
+      "noDecir": [
+        {
+          "frase": "Llamo de [empresa] por una deuda de $[monto].",
+          "porque": "Revelar la deuda a un tercero es falta grave."
+        },
+        {
+          "frase": "Seguro usted sabe dónde está.",
+          "porque": "Presionar a terceros puede generar quejas y sanciones."
+        },
+        {
+          "frase": "Pedir al tercero que pague o se haga responsable.",
+          "porque": "Solo el titular puede responder por el crédito."
+        }
+      ],
+      "relacionados": [
+        "terceros-script",
+        "no-soy-titular"
+      ],
+      "etiquetas": [
+        "no conozco al cliente",
+        "no lo conozco",
+        "no la conozco",
+        "no conozco a esa persona",
+        "numero equivocado",
+        "equivocado",
+        "se equivoco",
+        "aqui no vive",
+        "no vive aqui",
+        "ya no vive aqui",
+        "numero nuevo",
+        "cambie de numero",
+        "desde cuando tiene el numero",
+        "propietario del movil",
+        "dueno del celular",
+        "celular",
+        "movil",
+        "linea nueva"
+      ]
+    },
+    {
+      "id": "no-tengo-dinero",
+      "categoria": "objeciones",
+      "titulo": "“No tengo dinero”",
+      "arquetipo": "El sin liquidez real",
+      "situacion": "Ingreso informal e irregular; no tiene el monto completo. Responde seco o con tono de pena y suele dejar de contestar si se le presiona.",
+      "clienteDice": [
+        "Es que no me ha caído nada esta semana.",
+        "No tengo dinero ahorita."
+      ],
+      "respuesta": "Entiendo, [nombre]; a veces los ingresos no cuadran. Justo por eso le tengo una opción para hoy: en lugar de los $[total], puede cubrir solo [costo extensión] para activar su extensión y mover su fecha de pago a [fecha]. ¿Con cuánto cuenta en este momento? Si lo tiene, le envío su referencia por WhatsApp y lo dejamos resuelto mientras seguimos en la llamada.",
+      "alternativas": [
+        "Lo comprendo. Justamente por eso estamos contactándole antes de que el atraso avance. Podemos revisar una alternativa de pago de extensión hoy mismo, para evitar que el saldo siga creciendo.",
+        {
+          "etiqueta": "Pregunta de sondeo",
+          "texto": "¿Hay alguien que le pueda apoyar con su pago?"
+        }
+      ],
+      "firme": "Comprendo su situación; sin embargo, la obligación de pago sigue vigente. En esta etapa, no contar con recursos no detiene el proceso ni los cargos. Necesitamos registrar un pago o un acuerdo hoy.",
+      "noDecir": [
+        {
+          "frase": "Se le va a duplicar la deuda.",
+          "porque": "Hay que ser exacto y verificable, sin exagerar."
+        },
+        {
+          "frase": "Eso le pasa a todos.",
+          "porque": "Minimizar hace perder la confianza del cliente."
+        },
+        {
+          "frase": "Aceptar cualquier fecha para cerrar la llamada.",
+          "porque": "Una fecha realista mejora la calidad de la promesa."
+        },
+        {
+          "frase": "¿Le parece si le marco más tarde?",
+          "porque": "Cada contacto adicional retrasa el pago: busca resolverlo en la llamada en curso."
+        }
+      ],
+      "cierre": "Le envío su referencia por WhatsApp en este momento. ¿Realiza el pago de [costo extensión] mientras seguimos en la llamada? Si no puede ahora mismo, ¿a qué hora exacta de hoy lo hará?",
+      "relacionados": [
+        "ext-sin-liquidez",
+        "firme-liquidez",
+        "cons-cargos"
+      ],
+      "etiquetas": [
+        "no tengo dinero",
+        "no tengo",
+        "sin dinero",
+        "no tengo lana",
+        "no hay dinero",
+        "no me alcanza",
+        "no me ha caido nada",
+        "ando corto",
+        "no traigo",
+        "estoy quebrado",
+        "no tengo varo",
+        "no tengo feria",
+        "ahorita no",
+        "sin lana",
+        "ando apretado",
+        "no puedo pagar",
+        "no tengo con que"
+      ]
+    },
+    {
+      "id": "ya-pague",
+      "categoria": "objeciones",
+      "titulo": "“Ya pagué”",
+      "arquetipo": "El que cree que ya cumplió",
+      "situacion": "Pagó en tienda o banco y no se reflejó, o pagó otra cosa. Se molesta y puede subir el tono.",
+      "clienteDice": [
+        "Ya lo pagué, tengo el comprobante.",
+        "Ya pagué."
+      ],
+      "respuesta": "Con gusto lo revisamos ahora mismo, [nombre]. ¿Me confirma la fecha, el monto y dónde realizó el pago? Envíeme su comprobante por WhatsApp mientras seguimos en la llamada y lo reviso en este momento. Si el pago no corresponde a este crédito, le doy su referencia correcta para que lo deje resuelto hoy mismo, sin necesidad de volver a llamarle.",
+      "alternativas": [
+        "Si ya pagó, quiero ayudarle a aclararlo. ¿Me dice la fecha, el monto y dónde pagó?",
+        "¿Me envía su comprobante por [canal] para validarlo? Así evitamos que siga apareciendo el saldo."
+      ],
+      "firme": null,
+      "noDecir": [
+        {
+          "frase": "Eso no me importa.",
+          "porque": "La empatía mantiene la llamada y abre la negociación."
+        },
+        {
+          "frase": "Responder con el mismo tono o subir la voz.",
+          "porque": "Cuando el cliente está a la defensiva, la calma baja la tensión."
+        },
+        {
+          "frase": "Dar montos aproximados o «más o menos».",
+          "porque": "El cliente puede reclamar diferencias."
+        }
+      ],
+      "cierre": {
+        "etiqueta": "Si el pago no corresponde a este crédito",
+        "texto": "Le envío su referencia por WhatsApp en este momento. ¿Realiza el pago de $[monto] mientras seguimos en la llamada? Si no puede ahora mismo, ¿a qué hora exacta de hoy lo hará?"
+      },
+      "etiquetas": [
+        "ya pague",
+        "ya lo pague",
+        "ya deposite",
+        "ya hice el pago",
+        "ya liquide",
+        "ya transferi",
+        "comprobante",
+        "ticket",
+        "recibo",
+        "pague en oxxo",
+        "pague en tienda",
+        "pague en el banco",
+        "no se refleja",
+        "no aparece mi pago",
+        "ya cumpli",
+        "ya pagué"
+      ]
+    },
+    {
+      "id": "no-soy-titular",
+      "categoria": "objeciones",
+      "titulo": "“Yo no soy el titular”",
+      "arquetipo": "El evasivo: es el titular y niega serlo, o es un tercero real",
+      "insignia": "Caso especial",
+      "situacion": "Voz que coincide con llamadas previas. Duda antes de negar, responde corto y cuelga rápido.",
+      "clienteDice": [
+        "Yo no soy [nombre del titular].",
+        "No soy yo."
+      ],
+      "avisos": [
+        {
+          "tipo": "especial",
+          "titulo": "Antes de continuar o cerrar, determina si es o no el titular",
+          "pasos": [
+            "Sondea al cliente: ¿cuánto tiempo lleva con ese número?",
+            "Verifica en el CRM las acciones registradas, las extensiones y toda la información disponible.",
+            "Continúa solo si la persona confirma con claridad que es el titular, con nombre y apellido. Si es un tercero, no reveles el adeudo y sigue el script de terceros."
+          ],
+          "frase": "¿Desde hace cuánto tiempo tiene este número?"
+        }
+      ],
+      "respuesta": "Es necesario confirmar que tengo comunicación directa con el titular. Le informo que este número fue proporcionado y registrado por el Sr./Sra. [nombre completo] durante su proceso de solicitud. ¿El Sr./Sra. [nombre completo] se encuentra disponible para atender la llamada?",
+      "alternativas": [
+        {
+          "etiqueta": "Para confirmar identidad",
+          "texto": "Para confirmar que hablo con la persona correcta, ¿me confirma que usted es el Sr./Sra. [nombre y apellido]?"
+        },
+        "Entiendo. Si en algún momento decide atenderlo, tengo una opción para usted. Le dejo mi número."
+      ],
+      "firme": null,
+      "firmeNota": "No uses variante firme aquí: confrontar cierra la llamada.",
+      "noDecir": [
+        {
+          "frase": "¿Está seguro que no es usted?",
+          "porque": "Confrontar cierra la llamada."
+        },
+        {
+          "frase": "Llamo de [empresa] por una deuda de $[monto].",
+          "porque": "Revelar la deuda a un tercero es falta grave."
+        },
+        {
+          "frase": "Seguro usted sabe dónde está.",
+          "porque": "Presionar a terceros puede generar quejas y sanciones."
+        },
+        {
+          "frase": "Pedir al tercero que pague o se haga responsable.",
+          "porque": "Solo el titular puede responder por el crédito."
+        }
+      ],
+      "cierre": [
+        {
+          "etiqueta": "Si confirma ser el titular (nombre y apellido)",
+          "texto": "Gracias, ya puedo hablarle con confianza."
+        },
+        {
+          "etiqueta": "Si es un tercero con relación con el titular",
+          "texto": "Por favor, ¿le puede indicar que nos comunicamos de Crédito 365 y que nos devuelva la llamada a este mismo número?"
+        }
+      ],
+      "relacionados": [
+        "terceros-script",
+        "terceros-no-conozco",
+        "verificacion"
+      ],
+      "etiquetas": [
+        "no soy yo",
+        "yo no soy",
+        "no soy el titular",
+        "no soy esa persona",
+        "titular",
+        "evasivo",
+        "niega ser el cliente",
+        "de parte de quien",
+        "quien lo busca"
+      ],
+      "cierreTitulo": "Cierre según lo que responda"
+    },
+    {
+      "id": "cuando-me-paguen",
+      "categoria": "objeciones",
+      "titulo": "“Cuando me paguen” / “Pago la próxima semana”",
+      "arquetipo": "El dependiente de quincena: tiene ingreso fijo, pero no coincide con la fecha de pago",
+      "situacion": "Es cooperativo, pero posterga.",
+      "clienteDice": [
+        "Hasta el 15 me depositan, llámeme después.",
+        "Me pagan el [día].",
+        "Pago después / la próxima semana."
+      ],
+      "respuesta": "Entiendo que su pago llega el [fecha], [nombre]. Hasta entonces el atraso sigue sumando cargos, así que le propongo algo para hoy: en lugar de los $[total], cubra solo [costo extensión] para activar su extensión, y su fecha de pago se mueve a [fecha]. ¿Con cuánto cuenta en este momento para dejarlo resuelto en esta llamada?",
+      "alternativas": [
+        {
+          "etiqueta": "Abre la extensión",
+          "texto": "Mientras llega su pago, ¿hay algo que podamos hacer para que no se acumulen más días de atraso?"
+        },
+        "Entiendo su intención de pagar; sin embargo, el sistema solo puede detener cargos cuando hay un pago registrado. Podemos programar el pago hoy mismo o bien realizar un pago de extensión para proteger su historial.",
+        "Entiendo que hasta el [fecha] le depositan, [nombre]. Hasta entonces el atraso sigue sumando. ¿Qué le conviene hacer para que no crezca?"
+      ],
+      "firme": "En este momento, su cuenta ya se encuentra en atraso avanzado. Si hoy no se registra un pago, el crédito continuará con un proceso más intensivo de recuperación. Por eso es importante resolverlo ahora.",
+      "noDecir": [
+        {
+          "frase": "Ok, entonces quedamos. (sin fecha ni hora)",
+          "porque": "Una promesa sin detalle casi nunca se cumple."
+        },
+        {
+          "frase": "Aceptar cualquier fecha para cerrar la llamada.",
+          "porque": "Una fecha realista mejora la calidad de la promesa."
+        },
+        {
+          "frase": "¿Le parece si le marco más tarde?",
+          "porque": "Cada contacto adicional retrasa el pago: busca resolverlo en la llamada en curso."
+        }
+      ],
+      "cierre": "Le envío su referencia por WhatsApp en este momento. ¿Realiza el pago de [costo extensión] mientras seguimos en la llamada? Si no puede ahora mismo, ¿a qué hora exacta de hoy lo hará?",
+      "relacionados": [
+        "ext-pago-despues",
+        "cons-cargos"
+      ],
+      "etiquetas": [
+        "cuando me paguen",
+        "me pagan",
+        "quincena",
+        "me depositan",
+        "hasta el 15",
+        "hasta el 30",
+        "dia de pago",
+        "nomina",
+        "llameme despues",
+        "pago despues",
+        "la proxima semana",
+        "la otra semana",
+        "el lunes",
+        "el viernes",
+        "mas adelante",
+        "luego le pago",
+        "cuando cobre",
+        "cuando tenga"
+      ]
+    },
+    {
+      "id": "intereses-abusivos",
+      "categoria": "objeciones",
+      "titulo": "“Los intereses son abusivos” / “No estoy de acuerdo con el monto”",
+      "arquetipo": "El inconforme: siente que le cobran de más y quiere discutir",
+      "situacion": "Cuestiona montos y compara con otros préstamos.",
+      "clienteDice": [
+        "Eso no es lo que acordamos.",
+        "Los intereses son abusivos.",
+        "No estoy de acuerdo con el monto."
+      ],
+      "respuesta": {
+        "texto": "Entiendo su molestia, [nombre]. Le explico ahora mismo cómo se compone su saldo para que quede claro: capital, intereses y cargos por atraso, conforme a su contrato. Justamente para que no siga aumentando, hoy puede liquidar los $[total] o cubrir solo [costo extensión] con su extensión. ¿Cuál de las dos le conviene para dejarlo resuelto en esta llamada?",
+        "nota": "Desglosa capital, interés y cargos."
+      },
+      "alternativas": [
+        "Gracias por comentarlo. El monto que le informo corresponde al capital pendiente más cargos generados por atraso, establecidos en su contrato. Para apoyarle, hoy podemos reducir el impacto del atraso si realiza el pago ahora.",
+        "Lo que sí puedo hacer es revisar con usted cómo regularizar y que no siga aumentando."
+      ],
+      "firme": {
+        "texto": "El monto corresponde a un crédito aceptado y firmado por usted, conforme a contrato. La falta de pago no cancela la deuda, solo incrementa sus consecuencias. ¿Va a regularizar hoy o dejar constancia de que decide no hacerlo?",
+        "nota": "Pregunta cerrada = presión legal válida."
+      },
+      "noDecir": [
+        {
+          "frase": "Dar montos aproximados o «más o menos».",
+          "porque": "El cliente puede reclamar diferencias."
+        },
+        {
+          "frase": "Sí, es su deuda y punto.",
+          "porque": "No discutir."
+        },
+        {
+          "frase": "Usted firmó, no hay nada que hacer.",
+          "porque": "No discutir."
+        }
+      ],
+      "cierre": "Su saldo total es $[monto]; la extensión le permite pagar [costo] hoy. Le envío su referencia por WhatsApp en este momento: ¿realiza el pago mientras seguimos en la llamada? Si no puede ahora mismo, ¿a qué hora exacta de hoy lo hará?",
+      "etiquetas": [
+        "intereses",
+        "abusivo",
+        "abusivos",
+        "muy caro",
+        "me cobran de mas",
+        "cobran de mas",
+        "rateros",
+        "no estoy de acuerdo",
+        "monto",
+        "saldo",
+        "cargos",
+        "no es lo que acordamos",
+        "desglose",
+        "inconforme",
+        "cuanto debo",
+        "por que tanto",
+        "usureros"
+      ]
+    },
+    {
+      "id": "no-me-llamen",
+      "categoria": "objeciones",
+      "titulo": "“Ya no me llamen” / “Los voy a denunciar”",
+      "arquetipo": "El hostil: está a la defensiva, amenaza o eleva la voz",
+      "situacion": "Interrumpe, usa frases fuertes y puede amenazar con CONDUSEF o con colgar.",
+      "clienteDice": [
+        "Ya no me llamen.",
+        "Los voy a denunciar.",
+        "Esto es acoso."
+      ],
+      "respuesta": "Tiene todo el derecho, [nombre], y entiendo su molestia. La forma más rápida de detener estas llamadas es dejar su cuenta regularizada, y lo podemos hacer ahora mismo: puede liquidar los $[total] o cubrir solo [costo extensión] con su extensión. ¿Me da un minuto para dejarlo resuelto en esta llamada?",
+      "alternativas": [
+        "Comprendo su molestia. Le confirmo que nuestra comunicación se realiza dentro de los horarios y parámetros permitidos por la ley. La intención de las gestiones es únicamente para dar solución a su adeudo y evitar mayores complicaciones para usted. La forma más rápida de detener estas llamadas es regularizar su cuenta. ¿Le parece si acordamos una solución ahora mismo?",
+        "Tiene todo el derecho, [nombre]. Mi intención es ayudarle a resolverlo de forma ordenada. ¿Me da un minuto?"
+      ],
+      "firme": "Mi intención es resolverlo con usted ahora. Si no se logra, el caso pasa a la siguiente etapa de gestión. ¿Buscamos una opción hoy?",
+      "noDecir": [
+        {
+          "frase": "Responder con el mismo tono o subir la voz.",
+          "porque": "Cuando el cliente está a la defensiva, la calma baja la tensión."
+        },
+        {
+          "frase": "Entonces lo veremos legalmente.",
+          "porque": "No amenazar."
+        },
+        {
+          "frase": "Esto se va a poner muy feo.",
+          "porque": "El tono intimidatorio es falta de cumplimiento."
+        },
+        {
+          "frase": "Entonces no se queje después.",
+          "porque": "Cerrar con respeto deja abierta la negociación futura."
+        }
+      ],
+      "cierre": "Le envío su referencia por WhatsApp en este momento. ¿Realiza el pago mientras seguimos en la llamada? Así queda resuelto hoy. Si no puede ahora mismo, ¿a qué hora exacta de hoy lo hará?",
+      "relacionados": [
+        "ext-ya-no-me-llaman",
+        "cons-escalamiento",
+        "g-tono"
+      ],
+      "etiquetas": [
+        "ya no me llamen",
+        "dejen de llamar",
+        "no me llamen",
+        "no me marquen",
+        "dejen de molestar",
+        "acoso",
+        "hostigamiento",
+        "me estan acosando",
+        "denunciar",
+        "denuncia",
+        "demanda",
+        "condusef",
+        "profeco",
+        "abogado",
+        "voy a colgar",
+        "hostil",
+        "enojado",
+        "grosero",
+        "groserias",
+        "molesto",
+        "grita",
+        "amenaza",
+        "es acoso"
+      ]
+    },
+    {
+      "id": "sin-trabajo",
+      "categoria": "objeciones",
+      "titulo": "“Me quedé sin trabajo” / “Hubo una emergencia”",
+      "arquetipo": "El afectado por imprevisto: pasó de ser buen pagador a tener un problema real",
+      "situacion": "Tono triste o cansado. Da contexto personal.",
+      "clienteDice": [
+        "Ahorita no puedo, estoy pasando por algo difícil.",
+        "Estoy desempleado.",
+        "Tuve un problema."
+      ],
+      "respuesta": "Lamento mucho lo que está pasando, [nombre]. Precisamente por situaciones como esta buscamos una solución hoy, que evite que se sigan generando cargos: en lugar de los $[total], con [costo extensión] activa su extensión y gana más tiempo para reponerse. ¿Con cuánto cuenta en este momento? Si lo tiene a la mano, le envío la referencia y lo dejamos listo en esta llamada.",
+      "alternativas": [
+        "Lamento escuchar eso. Precisamente por situaciones como esta, buscamos una solución temprana que evite que se generen cargos y dificulten superar esta circunstancia. Un pago mínimo hoy puede evitar que el atraso afecte más su situación. ¿Qué monto realista podría cubrir en este momento?",
+        "Hay opciones para darle más tiempo y que no pierda su historial. ¿Le explico?",
+        {
+          "etiqueta": "Pregunta de sondeo",
+          "texto": "¿Hay alguien que le pueda apoyar con su pago?"
+        }
+      ],
+      "firme": "Entendemos que pueden presentarse situaciones personales; sin embargo, el crédito no se suspende automáticamente. Indíqueme el monto que puede cubrir hoy.",
+      "noDecir": [
+        {
+          "frase": "Eso le pasa a todos.",
+          "porque": "Minimizar hace perder la confianza del cliente."
+        },
+        {
+          "frase": "Eso no me importa.",
+          "porque": "La empatía mantiene la llamada y abre la negociación."
+        },
+        {
+          "frase": "¿Le parece si le marco más tarde?",
+          "porque": "Cada contacto adicional retrasa el pago: busca resolverlo en la llamada en curso."
+        }
+      ],
+      "cierre": "Le envío su referencia por WhatsApp en este momento. ¿Realiza el pago de [costo extensión] mientras seguimos en la llamada? Si no puede ahora mismo, ¿a qué hora exacta de hoy lo hará?",
+      "relacionados": [
+        "aim",
+        "firme-art78",
+        "cons-nuevos-creditos"
+      ],
+      "etiquetas": [
+        "me quede sin trabajo",
+        "sin chamba",
+        "me quede sin chamba",
+        "me corrieron",
+        "me despidieron",
+        "desempleado",
+        "sin empleo",
+        "perdi mi trabajo",
+        "no tengo trabajo",
+        "emergencia",
+        "imprevisto",
+        "enfermo",
+        "enfermedad",
+        "hospital",
+        "accidente",
+        "operacion",
+        "fallecio",
+        "murio",
+        "funeral",
+        "tuve un problema",
+        "situacion dificil",
+        "algo dificil",
+        "crisis"
+      ]
+    },
+    {
+      "id": "consultar-pareja",
+      "categoria": "objeciones",
+      "titulo": "“Déjame consultarlo con mi pareja”",
+      "arquetipo": "El que depende de otra decisión: otra persona maneja el dinero",
+      "situacion": "Busca salir de la llamada.",
+      "clienteDice": [
+        "Es que yo no decido solo.",
+        "Mi esposo es quien paga.",
+        "Déjame consultarlo con mi pareja."
+      ],
+      "respuesta": "Claro, es importante que lo platiquen, [nombre]. ¿Puede consultarlo ahora? Con gusto le espero en la línea. Para que sea más fácil decidir: hoy pueden liquidar los $[total] o cubrir solo [costo extensión] con la extensión, que no se reporta negativo a buró. ¿Cuál de las dos opciones les funciona para dejarlo resuelto en esta llamada?",
+      "alternativas": [
+        {
+          "etiqueta": "Si duda",
+          "texto": "Para ayudarle a decidir, ¿qué parte le genera duda: el costo, la fecha o el buró?"
+        }
+      ],
+      "firme": null,
+      "noDecir": [
+        {
+          "frase": "Ok, entonces quedamos. (sin fecha ni hora)",
+          "porque": "Una promesa sin detalle casi nunca se cumple."
+        },
+        {
+          "frase": "¿Entonces qué decide? (pregunta abierta)",
+          "porque": "La pregunta de cierre con opciones ayuda a avanzar."
+        },
+        {
+          "frase": "¿Le parece si le marco más tarde?",
+          "porque": "Cada contacto adicional retrasa el pago: busca resolverlo en la llamada en curso."
+        }
+      ],
+      "cierre": "Le envío su referencia por WhatsApp en este momento. ¿Realiza el pago de $[monto] mientras seguimos en la llamada? Si no puede ahora mismo, ¿a qué hora exacta de hoy lo hará?",
+      "etiquetas": [
+        "consultarlo",
+        "consultar",
+        "mi pareja",
+        "mi esposo",
+        "mi esposa",
+        "mi marido",
+        "mi senora",
+        "mi mujer",
+        "no decido solo",
+        "no decido sola",
+        "el que paga",
+        "quien paga",
+        "lo platico",
+        "lo hablo",
+        "preguntarle",
+        "otra persona decide"
+      ]
+    },
+    {
+      "id": "promesero",
+      "categoria": "objeciones",
+      "titulo": "“Sí, ya voy a pagar” (promesas repetidas)",
+      "arquetipo": "El promesero: promete, no cumple y vuelve a prometer",
+      "situacion": "Es amable; cuando se le marca de nuevo, da otra fecha.",
+      "clienteDice": [
+        "Mañana sin falta.",
+        "Sí, ya voy a pagar."
+      ],
+      "respuesta": "Gracias por su disposición, [nombre]. La vez pasada quedamos en [fecha] y no se pudo, así que esta vez hagámoslo más sencillo: le envío su referencia por WhatsApp y realiza el pago ahora mismo, mientras seguimos en la llamada. Así ya no queda pendiente. ¿Tiene a la mano su aplicación del banco?",
+      "alternativas": [
+        {
+          "etiqueta": "Pregunta de sondeo",
+          "texto": "¿Qué fue lo que le impidió cumplir con los acuerdos anteriores?"
+        },
+        "Busquemos una opción que sí pueda cumplir hoy: el pago total de $[total] o la extensión de [costo extensión]. ¿Cuál le funciona?"
+      ],
+      "firme": "Mi intención es resolverlo con usted ahora. Si no se logra, el caso pasa a la siguiente etapa de gestión. ¿Buscamos una opción hoy?",
+      "noDecir": [
+        {
+          "frase": "Siempre dice lo mismo.",
+          "porque": "Se confronta el hecho, no a la persona."
+        },
+        {
+          "frase": "Ok, entonces quedamos. (sin fecha ni hora)",
+          "porque": "Una promesa sin detalle casi nunca se cumple."
+        },
+        {
+          "frase": "¿Le parece si le marco más tarde?",
+          "porque": "Cada contacto adicional retrasa el pago: busca resolverlo en la llamada en curso."
+        }
+      ],
+      "cierre": "Le envío su referencia por WhatsApp en este momento. ¿Realiza el pago de $[monto] mientras seguimos en la llamada? Si no puede ahora mismo, ¿a qué hora exacta de hoy lo hará?",
+      "relacionados": [
+        "promesa-firme",
+        "cons-escalamiento",
+        "g-promesas"
+      ],
+      "etiquetas": [
+        "ya voy a pagar",
+        "si ya voy a pagar",
+        "manana sin falta",
+        "ahorita pago",
+        "al rato pago",
+        "ya merito",
+        "promesa",
+        "promesas rotas",
+        "promesa incumplida",
+        "no cumplio",
+        "siempre promete",
+        "la vez pasada",
+        "volvio a fallar",
+        "promesero",
+        "si pago"
+      ]
+    },
+    {
+      "id": "otras-deudas",
+      "categoria": "objeciones",
+      "titulo": "“Tengo otras deudas más urgentes”",
+      "arquetipo": "El sobreendeudado: prioriza otros acreedores",
+      "situacion": "Compara con otras deudas y se muestra abrumado.",
+      "clienteDice": [
+        "Primero tengo que pagar la tarjeta.",
+        "Tengo otras deudas más urgentes."
+      ],
+      "respuesta": "Entiendo que tiene varios compromisos, [nombre]. Justamente por eso le conviene resolver este hoy, antes de que siga creciendo: en lugar de los $[total], con [costo extensión] activa su extensión y gana tiempo para organizar sus demás pagos. ¿Con cuánto puede apoyarse hoy para dejarlo listo en esta llamada?",
+      "alternativas": [
+        "Entiendo que tiene varios compromisos. Con un pago pequeño hoy, evita que el atraso aquí siga creciendo.",
+        "¿Qué monto sí podría apartar para este préstamo sin descuidar lo demás?",
+        "Su abono ayuda, pero con el atraso corriendo gran parte se va a cargos. Con la extensión el atraso se frena."
+      ],
+      "firme": "Entiendo que ahorita no es fácil. Regularizar ahora le ayuda a que más adelante vuelva a tener acceso a crédito con nosotros.",
+      "noDecir": [
+        {
+          "frase": "Eso le pasa a todos.",
+          "porque": "Minimizar hace perder la confianza del cliente."
+        },
+        {
+          "frase": "Con eso queda, no se preocupe.",
+          "porque": "Sin fecha y hora no hay promesa que dar seguimiento."
+        },
+        {
+          "frase": "¿Le parece si le marco más tarde?",
+          "porque": "Cada contacto adicional retrasa el pago: busca resolverlo en la llamada en curso."
+        }
+      ],
+      "cierre": "Le envío su referencia por WhatsApp en este momento. ¿Realiza el pago de [costo extensión] mientras seguimos en la llamada? Si no puede ahora mismo, ¿a qué hora exacta de hoy lo hará?",
+      "relacionados": [
+        "cons-nuevos-creditos",
+        "cons-saldo"
+      ],
+      "etiquetas": [
+        "otras deudas",
+        "tengo otras deudas",
+        "debo en otros lados",
+        "debo mucho",
+        "primero la tarjeta",
+        "tarjeta",
+        "otros prestamos",
+        "otras apps",
+        "otras financieras",
+        "sobreendeudado",
+        "abrumado",
+        "prioridad",
+        "mas urgentes",
+        "renta",
+        "colegiatura"
+      ]
+    },
+    {
+      "id": "no-voy-a-pagar",
+      "categoria": "objeciones",
+      "titulo": "“No les voy a pagar”",
+      "situacion": "El cliente se niega a pagar.",
+      "clienteDice": [
+        "No les voy a pagar."
+      ],
+      "avisos": [
+        {
+          "tipo": "importante",
+          "titulo": "No discutir. No amenazar."
+        }
+      ],
+      "respuesta": "Entiendo lo que me comenta, [nombre]. ¿Me permite preguntarle qué pasó para que tome esa decisión? Quiero ayudarle a encontrar una salida. Es importante aclarar que la deuda sigue vigente y, si no se regulariza en esta etapa, comenzará a generar cargos adicionales. Hoy puede evitarlo con el pago total o, al menos, con el pago de su extensión de [costo extensión]. ¿Cuál le funciona para dejarlo resuelto ahora mismo?",
+      "firme": "Queda claro lo que me indica. Debo informarle que la decisión de no pagar no cancela la deuda ni detiene el proceso de recuperación del adeudo pendiente. En este momento, su cuenta continúa en estatus de impago, continúa generando cargos y seguirá con acciones de cobro más intensivas. De igual forma le menciono que su cuenta podría ser asignada a una agencia de cobranza externa.",
+      "noDecir": [
+        {
+          "frase": "Sí, es su deuda y punto.",
+          "porque": "No discutir."
+        },
+        {
+          "frase": "Entonces lo veremos legalmente.",
+          "porque": "No amenazar."
+        },
+        {
+          "frase": "Si no reconoce, será peor.",
+          "porque": "No amenazar."
+        },
+        {
+          "frase": "Usted firmó, no hay nada que hacer.",
+          "porque": "No discutir."
+        },
+        {
+          "frase": "Esto se va a poner muy feo.",
+          "porque": "El tono intimidatorio es falta de cumplimiento."
+        }
+      ],
+      "cierre": "¿Lo regularizamos ahora con el pago total o con el pago de extensión? Le envío su referencia por WhatsApp en este momento para que lo realice mientras seguimos en la llamada.",
+      "relacionados": [
+        "firme-renuente",
+        "firme-reglas",
+        "cons-legal"
+      ],
+      "etiquetas": [
+        "no voy a pagar",
+        "no les voy a pagar",
+        "no pienso pagar",
+        "no pago",
+        "no les pago",
+        "no me da la gana",
+        "hagan lo que quieran",
+        "que me demanden",
+        "no les debo",
+        "me niego",
+        "se niega",
+        "negativa"
+      ],
+      "alternativas": [
+        "Entiendo lo que me comenta. Sin embargo, es importante aclarar que la deuda sigue vigente y, si no se regulariza en esta etapa, comenzará a generar cargos adicionales. Justamente por eso lo estamos contactando ahora, antes de que el atraso avance. Hoy puede evitar consecuencias mayores registrando un pago total o al menos un pago de extensión."
+      ]
+    },
+    {
+      "id": "no-reconozco",
+      "categoria": "objeciones",
+      "titulo": "“No reconozco la deuda”",
+      "situacion": "El cliente dice que no reconoce el crédito o el adeudo.",
+      "clienteDice": [
+        "No reconozco la deuda."
+      ],
+      "respuesta": "Entiendo su inquietud, [nombre]; revisémoslo juntos ahora mismo. El crédito fue otorgado el día [fecha] y el pago pendiente corresponde a los términos y condiciones que aceptó al recibir los recursos. Puede confirmarlo en este momento en su aplicación, o le envío la información por WhatsApp mientras seguimos en línea. Una vez que lo vea, ¿lo regularizamos hoy con el pago total o con su extensión?",
+      "firme": "Sin embargo, la falta de reconocimiento no suspende el adeudo ni los cargos.",
+      "noDecir": [
+        {
+          "frase": "Si no reconoce, será peor.",
+          "porque": "No amenazar."
+        },
+        {
+          "frase": "Usted firmó, no hay nada que hacer.",
+          "porque": "No discutir."
+        }
+      ],
+      "cierre": "Le envío su referencia por WhatsApp en este momento. ¿Realiza el pago de $[monto] mientras seguimos en la llamada? Si no puede ahora mismo, ¿a qué hora exacta de hoy lo hará?",
+      "relacionados": [
+        "no-soy-titular",
+        "intereses-abusivos"
+      ],
+      "etiquetas": [
+        "no reconozco",
+        "no reconozco la deuda",
+        "yo no pedi",
+        "yo no pedi nada",
+        "no es mio",
+        "no es mi deuda",
+        "nunca pedi",
+        "no saque ningun prestamo",
+        "fraude",
+        "robo de identidad",
+        "no conozco esa deuda",
+        "de que deuda",
+        "no se de que habla",
+        "yo no debo",
+        "no debo nada"
+      ],
+      "alternativas": [
+        "Entiendo su inquietud; sin embargo, el crédito fue otorgado el día [fecha] y el pago pendiente corresponde a los términos y condiciones que aceptó al recibir los recursos. Con gusto puedo enviarle la información por WhatsApp o puede revisarlo en su aplicación, pero mientras tanto, el saldo sigue activo."
+      ]
+    },
+    {
+      "id": "beneficios",
+      "categoria": "extensiones",
+      "tipo": "referencia",
+      "titulo": "Beneficios de la extensión: cómo decirlos",
+      "situacion": "Cinco beneficios con la frase exacta para el cliente.",
+      "bloques": [
+        {
+          "tipo": "frases",
+          "titulo": "Beneficio y cómo decirlo",
+          "items": [
+            {
+              "etiqueta": "No se reporta negativo a buró",
+              "texto": "El pago de la extensión, ya sea completa o con descuento, no se reporta de forma negativa a buró."
+            },
+            {
+              "etiqueta": "Más tiempo para pagar",
+              "texto": "Su fecha de pago se mueve a [fecha]; tiene más margen para reunir el dinero."
+            },
+            {
+              "etiqueta": "Paga menos hoy",
+              "texto": "Hoy solo paga [costo de extensión] en lugar de los $[total]."
+            },
+            {
+              "etiqueta": "Frena el atraso",
+              "texto": "Evita que el atraso siga corriendo mientras llega la nueva fecha."
+            },
+            {
+              "etiqueta": "Opción con descuento",
+              "texto": "Tenemos una opción de extensión con descuento, que le permite pagar menos hoy.",
+              "nota": "Solo si aplica al cliente."
+            }
+          ]
+        }
+      ],
+      "noDecir": [
+        {
+          "frase": "La extensión le limpia su historial.",
+          "porque": "Solo se puede afirmar lo que confirma la política."
+        },
+        {
+          "frase": "Es un costo mínimo, no se preocupe.",
+          "porque": "Siempre se dice el monto exacto y la fecha."
+        },
+        {
+          "frase": "Le puedo conseguir un descuento mayor si me dice que sí hoy.",
+          "porque": "No ofrecer descuentos que no están autorizados."
+        }
+      ],
+      "relacionados": [
+        "oferta-extension",
+        "g-buro",
+        "g-montos"
+      ],
+      "etiquetas": [
+        "beneficios",
+        "ventajas",
+        "extension",
+        "prorroga",
+        "para que sirve",
+        "que gano",
+        "buro",
+        "mas tiempo",
+        "paga menos",
+        "descuento",
+        "frena el atraso",
+        "no se reporta"
+      ]
+    },
+    {
+      "id": "oferta-extension",
+      "categoria": "extensiones",
+      "titulo": "Ofrecer la extensión (15 días)",
+      "situacion": "El cliente no puede pagar el total: ofrece el pago total o la extensión de su fecha límite.",
+      "respuesta": "Podemos evitar esto si hace el pago total de su deuda o puede hacer el pago de [monto] para activar una extensión de su fecha límite por 15 días. Esto le ayudará a poner su cuenta al corriente, le evitará generar mal historial crediticio y tendrá más tiempo para resolver su deuda. ¿Procedemos a agendar su pago?",
+      "alternativas": [
+        {
+          "etiqueta": "Para abrir la negociación",
+          "texto": "Si el pago fuera en otra fecha, ¿le sería posible cumplirlo?"
+        },
+        "La extensión cuesta [costo] y su nueva fecha de pago es [fecha]."
+      ],
+      "firme": "¿Quiere que dejemos la extensión activa ahora mientras aún está disponible en este valor?",
+      "noDecir": [
+        {
+          "frase": "Es un costo mínimo, no se preocupe.",
+          "porque": "Siempre se dice el monto exacto y la fecha."
+        },
+        {
+          "frase": "Dar montos aproximados o «más o menos».",
+          "porque": "El cliente puede reclamar diferencias."
+        }
+      ],
+      "cierre": "¿Procedemos a agendar su pago? Voy a registrar el compromiso para el día [fecha] a las [hora].",
+      "relacionados": [
+        "beneficios",
+        "frases-urgencia",
+        "promesa-firme"
+      ],
+      "etiquetas": [
+        "ofrecer extension",
+        "extension",
+        "prorroga",
+        "me dan prorroga",
+        "me dan chance",
+        "15 dias",
+        "quince dias",
+        "mas tiempo",
+        "mover fecha",
+        "aplazar",
+        "recorrer fecha",
+        "alargar",
+        "plazo",
+        "pago de extension",
+        "activar extension",
+        "negociar"
+      ]
+    },
+    {
+      "id": "frases-urgencia",
+      "categoria": "extensiones",
+      "tipo": "referencia",
+      "titulo": "Frases útiles de urgencia",
+      "situacion": "Para cerrar la extensión hoy cuando el cliente duda.",
+      "avisos": [
+        {
+          "tipo": "nota",
+          "titulo": "Úsalas solo si es cierto",
+          "texto": "Crear urgencia falsa es engaño: di que el valor cambia solo si de verdad cambia."
+        }
+      ],
+      "bloques": [
+        {
+          "tipo": "frases",
+          "titulo": "Frases",
+          "items": [
+            "Si lo dejamos para mañana, el valor incrementa. ¿Qué prefiere, asegurar el valor actual en este momento o asumir el aumento?",
+            {
+              "etiqueta": "Urgencia",
+              "texto": "¿Quiere que dejemos la extensión activa ahora mientras aún está disponible en este valor?"
+            }
+          ]
+        }
+      ],
+      "noDecir": [
+        {
+          "frase": "Es su última oportunidad. (si no lo es)",
+          "porque": "Crear urgencia falsa es engaño."
+        }
+      ],
+      "etiquetas": [
+        "urgencia",
+        "frases utiles",
+        "hoy",
+        "ahora",
+        "valor",
+        "aumento",
+        "manana sube",
+        "asegurar",
+        "cerrar"
+      ]
+    },
+    {
+      "id": "ext-cuanto-cuesta",
+      "categoria": "extensiones",
+      "titulo": "“¿Cuánto cuesta? No quiero pagar más”",
+      "arquetipo": "El sensible al costo: ve la extensión solo como un gasto extra",
+      "situacion": "Pregunta el precio de inmediato y compara contra el monto total.",
+      "clienteDice": [
+        "Entonces me cobran por no pagar.",
+        "¿Cuánto cuesta? No quiero pagar más."
+      ],
+      "respuesta": "La extensión es de [costo] y, a cambio, no tiene que pagar los $[total] hoy y gana [X días] más. Además, no se reporta negativo a buró.",
+      "alternativas": [
+        "¿Qué le conviene más hoy: pagar $[total] o solo [costo] y tener más tiempo?"
+      ],
+      "firme": {
+        "texto": "La opción con descuento aplica hasta el [fecha]. Después puede ya no estar disponible. Aprovechémosla hoy.",
+        "nota": "Solo si el cliente tiene la opción con descuento."
+      },
+      "noDecir": [
+        {
+          "frase": "Es un costo mínimo, no se preocupe.",
+          "porque": "Siempre se dice el monto exacto y la fecha."
+        },
+        {
+          "frase": "Le puedo conseguir un descuento mayor si me dice que sí hoy.",
+          "porque": "No ofrecer descuentos que no están autorizados."
+        }
+      ],
+      "cierre": "La extensión cuesta [costo] y su nueva fecha de pago es [fecha]. ¿La hacemos hoy o prefiere mañana a primera hora?",
+      "relacionados": [
+        "cons-beneficios"
+      ],
+      "etiquetas": [
+        "cuanto cuesta",
+        "costo",
+        "precio",
+        "cuanto es",
+        "cuanto sale",
+        "caro",
+        "no quiero pagar mas",
+        "me cobran por no pagar",
+        "cobro extra",
+        "gasto extra",
+        "sensible al costo",
+        "cuanto cobran"
+      ]
+    },
+    {
+      "id": "ext-buro",
+      "categoria": "extensiones",
+      "titulo": "“¿Me afecta en mi buró?”",
+      "arquetipo": "El preocupado por su historial: quiere proteger su crédito",
+      "situacion": "Hace preguntas específicas, pide que se lo confirmen y compara con otras experiencias.",
+      "clienteDice": [
+        "¿Me afecta en mi buró?"
+      ],
+      "respuesta": "Buena pregunta, [nombre]. El pago de la extensión, completa o con descuento, no se reporta negativo a buró. Es una forma de regularizar sin afectar su historial por ese pago.",
+      "alternativas": [
+        "Si desea, le confirmo las condiciones por [canal] antes de que decida."
+      ],
+      "firme": "El pago de la extensión, completa o con descuento, no se reporta negativo a buró. Si el atraso continúa, sí puede afectar su historial.",
+      "noDecir": [
+        {
+          "frase": "La extensión le limpia su historial.",
+          "porque": "Solo se puede afirmar lo que confirma la política."
+        },
+        {
+          "frase": "Si no paga, queda en buró de por vida.",
+          "porque": "Evita exageraciones y datos que no se pueden sostener."
+        },
+        {
+          "frase": "Lo vamos a reportar y no va a volver a tener crédito.",
+          "porque": "Informar una consecuencia posible no es amenazar."
+        }
+      ],
+      "cierre": "Le confirmo las condiciones por [canal] antes de que pague. Voy a registrar el compromiso para el día [fecha] a las [hora].",
+      "relacionados": [
+        "cons-buro",
+        "g-buro"
+      ],
+      "etiquetas": [
+        "buro",
+        "buro de credito",
+        "historial",
+        "historial crediticio",
+        "me afecta",
+        "me reportan",
+        "reporte",
+        "score",
+        "calificacion",
+        "me boletinan",
+        "lista negra"
+      ]
+    },
+    {
+      "id": "ext-pago-despues",
+      "categoria": "extensiones",
+      "titulo": "“Mejor pago todo después”",
+      "arquetipo": "El postergador: confía en poder pagar completo más adelante",
+      "situacion": "Es amable, pero no concreta nada.",
+      "clienteDice": [
+        "Yo le pago completo el [fecha].",
+        "Mejor pago todo después."
+      ],
+      "respuesta": "Perfecto. Mientras llega esa fecha, con la extensión usted gana tiempo y evita que el atraso siga corriendo. ¿Le explico cómo funciona?",
+      "alternativas": [
+        "Si se le complica llegar a esa fecha, ¿tendría un plan de respaldo? La extensión puede ser ese respaldo.",
+        "Entiendo que hasta el [fecha] le depositan, [nombre]. Hasta entonces el atraso sigue sumando. ¿Qué le conviene hacer para que no crezca?"
+      ],
+      "firme": "En este momento, su cuenta ya se encuentra en atraso avanzado. Si hoy no se registra un pago, el crédito continuará con un proceso más intensivo de recuperación. Por eso es importante resolverlo ahora.",
+      "noDecir": [
+        {
+          "frase": "Ok, entonces quedamos. (sin fecha ni hora)",
+          "porque": "Una promesa sin detalle casi nunca se cumple."
+        }
+      ],
+      "cierre": "¿La hacemos hoy o prefiere mañana a primera hora? Voy a registrar el compromiso para el día [fecha] a las [hora].",
+      "relacionados": [
+        "cuando-me-paguen",
+        "cons-cargos"
+      ],
+      "etiquetas": [
+        "pago todo despues",
+        "mejor pago despues",
+        "pago completo despues",
+        "le pago completo",
+        "despues pago",
+        "prefiero pagar todo",
+        "liquidar despues",
+        "postergador",
+        "mas adelante"
+      ]
+    },
+    {
+      "id": "ext-para-que",
+      "categoria": "extensiones",
+      "titulo": "“¿Y para qué me sirve eso?”",
+      "arquetipo": "El desinformado: no entiende el producto ni sus beneficios",
+      "situacion": "Hace preguntas básicas, duda y puede confundir la extensión con una condonación.",
+      "clienteDice": [
+        "¿Y para qué me sirve eso?"
+      ],
+      "respuesta": "Es sencillo: paga [costo] hoy y su fecha se mueve a [fecha]. Tiene más tiempo y no se reporta negativo a buró.",
+      "alternativas": [
+        "Le da dos cosas: más tiempo y que pague menos hoy. ¿Cuál le ayuda más?",
+        {
+          "etiqueta": "Si no sabes la respuesta",
+          "texto": "Eso no lo puedo asegurar; déjeme confirmarlo y le aviso."
+        }
+      ],
+      "firme": null,
+      "noDecir": [
+        {
+          "frase": "Inventar una respuesta para no perder la venta.",
+          "porque": "Una promesa falsa genera quejas y pérdida de confianza."
+        },
+        {
+          "frase": "La extensión le limpia su historial.",
+          "porque": "Solo se puede afirmar lo que confirma la política."
+        }
+      ],
+      "cierre": "La extensión cuesta [costo] y su nueva fecha de pago es [fecha]. ¿La hacemos hoy o prefiere mañana a primera hora?",
+      "relacionados": [
+        "beneficios"
+      ],
+      "etiquetas": [
+        "para que sirve",
+        "para que me sirve",
+        "que es eso",
+        "no entiendo",
+        "como funciona",
+        "que gano",
+        "explicame",
+        "condonacion",
+        "me perdonan",
+        "me quitan la deuda",
+        "desinformado",
+        "dudas"
+      ]
+    },
+    {
+      "id": "ext-desconfiado",
+      "categoria": "extensiones",
+      "titulo": "“Ya me han dicho que sí y luego no es cierto”",
+      "arquetipo": "El desconfiado: tuvo malas experiencias con cobranza u otras financieras",
+      "situacion": "Habla con desconfianza y pide que se lo manden por escrito.",
+      "clienteDice": [
+        "Luego me cobran algo diferente.",
+        "Ya me han dicho que sí y luego no es cierto."
+      ],
+      "respuesta": "Entiendo su desconfianza. Antes de que pague, le confirmo por [canal] el monto, la fecha y las condiciones.",
+      "alternativas": [
+        "Puede validar todo en su app o con mi número directo antes de decidir."
+      ],
+      "firme": null,
+      "noDecir": [
+        {
+          "frase": "Confíe en mí, no le va a pasar nada.",
+          "porque": "Dar evidencia genera confianza; las garantías verbales no."
+        },
+        {
+          "frase": "Inventar una respuesta para no perder la venta.",
+          "porque": "Una promesa falsa genera quejas y pérdida de confianza."
+        }
+      ],
+      "cierre": "Le envío por [canal] el monto, la fecha y las condiciones. Voy a registrar el compromiso para el día [fecha] a las [hora].",
+      "etiquetas": [
+        "desconfianza",
+        "desconfiado",
+        "no les creo",
+        "mentirosos",
+        "me mintieron",
+        "por escrito",
+        "mandamelo por escrito",
+        "mandalo por whatsapp",
+        "luego me cobran",
+        "cobran diferente",
+        "estafa",
+        "engano",
+        "mala experiencia",
+        "no confio"
+      ]
+    },
+    {
+      "id": "ext-abono",
+      "categoria": "extensiones",
+      "titulo": "“Mejor te hago un abono”",
+      "arquetipo": "El abonador: prefiere pagar poco y no ampliar el plazo",
+      "situacion": "Ofrece una cantidad menor a la mora.",
+      "clienteDice": [
+        "Te mando $[monto] y ya.",
+        "Mejor te hago un abono."
+      ],
+      "respuesta": "Se lo agradezco. Un abono ayuda, pero el atraso sigue corriendo. Con la extensión gana más tiempo y no se reporta negativo a buró. ¿Cómo lo ve?",
+      "alternativas": [
+        "Podemos hacer ambas: la extensión hoy y un abono después, si le acomoda."
+      ],
+      "firme": "Su abono ayuda, pero con el atraso corriendo gran parte se va a cargos. Con la extensión el atraso se frena.",
+      "noDecir": [
+        {
+          "frase": "Dar montos aproximados o «más o menos».",
+          "porque": "El cliente puede reclamar diferencias."
+        }
+      ],
+      "cierre": "Su saldo total es $[monto]; la extensión le permite pagar [costo] hoy. ¿La hacemos hoy o prefiere mañana a primera hora?",
+      "relacionados": [
+        "cons-saldo"
+      ],
+      "etiquetas": [
+        "abono",
+        "abonar",
+        "te hago un abono",
+        "pago parcial",
+        "una parte",
+        "un poquito",
+        "lo que pueda",
+        "te mando",
+        "pago minimo",
+        "abonador",
+        "en partes",
+        "parcialidades"
+      ]
+    },
+    {
+      "id": "ext-sin-liquidez",
+      "categoria": "extensiones",
+      "titulo": "“No tengo ni para la extensión”",
+      "arquetipo": "El sin liquidez: no le alcanza ni para el costo de la extensión",
+      "situacion": "Se muestra cerrado y puede colgar.",
+      "clienteDice": [
+        "Ni eso tengo.",
+        "No tengo ni para la extensión."
+      ],
+      "respuesta": {
+        "texto": "Entiendo. Hay una opción de extensión con descuento que le permite pagar menos hoy. ¿Qué monto podría reunir esta semana?",
+        "nota": "Solo si aplica al cliente."
+      },
+      "alternativas": [
+        "¿Qué día cobra? Agendamos la extensión para esa fecha y le marco antes."
+      ],
+      "firme": "Comprendo su situación; sin embargo, la obligación de pago sigue vigente. En esta etapa, no contar con recursos no detiene el proceso ni los cargos. Necesitamos registrar un pago o un acuerdo hoy.",
+      "noDecir": [
+        {
+          "frase": "Le puedo conseguir un descuento mayor si me dice que sí hoy.",
+          "porque": "No ofrecer descuentos que no están autorizados."
+        },
+        {
+          "frase": "Eso le pasa a todos.",
+          "porque": "Minimizar hace perder la confianza del cliente."
+        }
+      ],
+      "cierre": "¿Qué día cobra? Agendamos la extensión para el día [fecha] a las [hora] y le marco antes.",
+      "relacionados": [
+        "no-tengo-dinero",
+        "firme-liquidez"
+      ],
+      "etiquetas": [
+        "ni para la extension",
+        "no tengo ni para eso",
+        "ni eso tengo",
+        "no me alcanza",
+        "no alcanzo",
+        "sin liquidez",
+        "nada de dinero",
+        "cero pesos",
+        "no tengo nada"
+      ]
+    },
+    {
+      "id": "ext-lo-voy-a-pensar",
+      "categoria": "extensiones",
+      "titulo": "“Lo voy a pensar”",
+      "arquetipo": "El indeciso: no dice que no, pero tampoco avanza",
+      "situacion": "Rara vez regresa la llamada.",
+      "clienteDice": [
+        "Déjame verlo y te aviso.",
+        "Lo voy a pensar."
+      ],
+      "respuesta": "Claro. Para ayudarle a decidir, ¿qué parte le genera duda: el costo, la fecha o el buró?",
+      "alternativas": [
+        "¿Le parece si le marco hoy a las [hora] para ver qué decidió? La oferta aplica hasta [fecha]."
+      ],
+      "firme": "¿Quiere que dejemos la extensión activa ahora mientras aún está disponible en este valor?",
+      "noDecir": [
+        {
+          "frase": "¿Entonces qué decide? (pregunta abierta)",
+          "porque": "La pregunta de cierre con opciones ayuda a avanzar."
+        },
+        {
+          "frase": "Es su última oportunidad. (si no lo es)",
+          "porque": "Crear urgencia falsa es engaño."
+        }
+      ],
+      "cierre": "¿La hacemos hoy o prefiere mañana a primera hora? Si prefiere pensarlo, le marco hoy a las [hora].",
+      "relacionados": [
+        "frases-urgencia"
+      ],
+      "etiquetas": [
+        "lo voy a pensar",
+        "lo pienso",
+        "dejame pensarlo",
+        "dejame verlo",
+        "te aviso",
+        "luego te aviso",
+        "luego le digo",
+        "no se",
+        "indeciso",
+        "lo checo",
+        "lo reviso"
+      ]
+    },
+    {
+      "id": "ext-ya-no-me-llaman",
+      "categoria": "extensiones",
+      "titulo": "“Si me da extensión, ¿ya no me llaman?”",
+      "arquetipo": "El cansado de la presión: busca alivio de las llamadas",
+      "situacion": "Pregunta cuántas veces le llamarán; se muestra interesado, pero con recelo.",
+      "clienteDice": [
+        "Si me da extensión, ¿ya no me llaman?"
+      ],
+      "respuesta": {
+        "texto": "Con la extensión su nueva fecha es [fecha] y se actualiza su estatus. Le explico qué contactos sí tendrá.",
+        "nota": "Sin prometer lo que la política no garantice."
+      },
+      "alternativas": [
+        "Mi objetivo es que quede claro y ordenado. ¿Le explico los pasos?"
+      ],
+      "firme": "Mi intención es resolverlo con usted ahora. Si no se logra, el caso pasa a la siguiente etapa de gestión. ¿Buscamos una opción hoy?",
+      "noDecir": [
+        {
+          "frase": "Confíe en mí, no le va a pasar nada.",
+          "porque": "Dar evidencia genera confianza; las garantías verbales no."
+        },
+        {
+          "frase": "Inventar una respuesta para no perder la venta.",
+          "porque": "Una promesa falsa genera quejas y pérdida de confianza."
+        }
+      ],
+      "cierre": "Su nueva fecha de pago es [fecha]. ¿La hacemos hoy o prefiere mañana a primera hora?",
+      "relacionados": [
+        "no-me-llamen",
+        "cons-escalamiento"
+      ],
+      "etiquetas": [
+        "ya no me llaman",
+        "dejan de llamar",
+        "me dejan de llamar",
+        "ya no me van a llamar",
+        "cuantas veces",
+        "llamadas",
+        "cansado",
+        "presion",
+        "me tienen harto",
+        "me fastidian",
+        "alivio"
+      ]
+    },
+    {
+      "id": "ext-mal-buro",
+      "categoria": "extensiones",
+      "titulo": "“Ya estoy mal en buró, qué más da”",
+      "arquetipo": "El resignado: cree que su historial ya no tiene arreglo y se desmotiva",
+      "situacion": "Tono apático, sin ganas de negociar.",
+      "clienteDice": [
+        "Ya de por sí estoy fregado, no importa.",
+        "Ya estoy mal en buró, qué más da."
+      ],
+      "respuesta": "Entiendo, [nombre]. Justo por eso la extensión le conviene: el pago no se reporta negativo y evita que el atraso siga sumando.",
+      "alternativas": [
+        "Todavía está a tiempo de regularizar. ¿Qué día le acomoda más para hacerlo?"
+      ],
+      "firme": "El pago de la extensión, completa o con descuento, no se reporta negativo a buró. Si el atraso continúa, sí puede afectar su historial.",
+      "noDecir": [
+        {
+          "frase": "Si no paga, queda en buró de por vida.",
+          "porque": "Evita exageraciones y datos que no se pueden sostener."
+        },
+        {
+          "frase": "La extensión le limpia su historial.",
+          "porque": "Solo se puede afirmar lo que confirma la política."
+        }
+      ],
+      "cierre": "Todavía está a tiempo de regularizar. ¿Qué día le acomoda más? Voy a registrar el compromiso para el día [fecha] a las [hora].",
+      "relacionados": [
+        "cons-buro"
+      ],
+      "etiquetas": [
+        "ya estoy mal en buro",
+        "ya estoy en buro",
+        "ya estoy fregado",
+        "que mas da",
+        "no importa",
+        "me da igual",
+        "ya ni modo",
+        "resignado",
+        "apatico",
+        "ya estoy boletinado",
+        "de todos modos"
+      ]
+    },
+    {
+      "id": "ext-lo-mismo",
+      "categoria": "extensiones",
+      "titulo": "“Eso es lo mismo que pagar, no me conviene”",
+      "arquetipo": "El comparador: calcula cuánto paga en total y compara",
+      "situacion": "Hace cuentas en voz alta, pregunta por el costo total y busca el mejor trato.",
+      "clienteDice": [
+        "Eso es lo mismo que pagar, no me conviene."
+      ],
+      "respuesta": "Si paga la deuda completa hoy, es $[total]. Con la extensión paga [costo] y gana [X días]. Usted decide cuál le funciona mejor.",
+      "alternativas": [
+        {
+          "texto": "¿Quiere que le explique la opción con descuento para comparar?",
+          "nota": "Si aplica."
+        }
+      ],
+      "firme": {
+        "texto": "La opción con descuento aplica hasta el [fecha]. Después puede ya no estar disponible. Aprovechémosla hoy.",
+        "nota": "Solo si el cliente tiene la opción con descuento."
+      },
+      "noDecir": [
+        {
+          "frase": "Dar montos aproximados o «más o menos».",
+          "porque": "El cliente puede reclamar diferencias."
+        },
+        {
+          "frase": "Le puedo conseguir un descuento mayor si me dice que sí hoy.",
+          "porque": "No ofrecer descuentos que no están autorizados."
+        }
+      ],
+      "cierre": "Su saldo total es $[monto]; la extensión le permite pagar [costo] hoy. ¿La hacemos hoy o prefiere mañana a primera hora?",
+      "relacionados": [
+        "cons-beneficios"
+      ],
+      "etiquetas": [
+        "lo mismo que pagar",
+        "no me conviene",
+        "no conviene",
+        "me sale igual",
+        "sale mas caro",
+        "comparar",
+        "cuanto pago en total",
+        "total",
+        "mejor trato",
+        "comparador",
+        "hacer cuentas"
+      ]
+    },
+    {
+      "id": "cons-cargos",
+      "categoria": "consecuencias",
+      "titulo": "Más atraso y más cargos",
+      "situacion": "Cada día suma intereses moratorios o cargos y el saldo crece.",
+      "aplicaEn": [
+        "cuando-me-paguen",
+        "ext-pago-despues",
+        "promesero"
+      ],
+      "respuesta": "Entiendo que hasta el [fecha] le depositan, [nombre]. Hasta entonces el atraso sigue sumando. ¿Qué le conviene hacer para que no crezca?",
+      "alternativas": [
+        {
+          "etiqueta": "Frase segura",
+          "texto": "Si el atraso continúa, el saldo puede seguir creciendo por los cargos aplicables."
+        }
+      ],
+      "contraste": "Con la extensión el atraso se frena y la nueva fecha le da margen.",
+      "firme": "Comprendo su situación; sin embargo, la obligación de pago sigue vigente. En esta etapa, no contar con recursos no detiene el proceso ni los cargos.",
+      "noDecir": [
+        {
+          "frase": "Se le va a duplicar la deuda.",
+          "porque": "Hay que ser exacto y verificable, sin exagerar."
+        }
+      ],
+      "cierre": "¿Qué le conviene hacer para que no crezca? Voy a registrar el compromiso para el día [fecha] a las [hora].",
+      "etiquetas": [
+        "cargos",
+        "intereses",
+        "moratorios",
+        "el saldo crece",
+        "aumenta",
+        "sube la deuda",
+        "mas atraso",
+        "crece",
+        "recargos",
+        "penalizacion",
+        "multa"
+      ]
+    },
+    {
+      "id": "cons-buro",
+      "categoria": "consecuencias",
+      "titulo": "Reporte negativo a buró",
+      "situacion": "El atraso puede reflejarse en su historial y afectar créditos futuros.",
+      "aplicaEn": [
+        "ext-buro",
+        "ext-mal-buro"
+      ],
+      "respuesta": "El pago de la extensión, completa o con descuento, no se reporta negativo a buró. Si el atraso continúa, sí puede afectar su historial.",
+      "alternativas": [
+        {
+          "etiqueta": "Frase segura",
+          "texto": "Si el atraso continúa, puede afectar su historial crediticio."
+        }
+      ],
+      "contraste": "Diferencia clave: pagar la extensión no reporta negativo.",
+      "firme": "Si continúa sin pagar, podría enfrentar mal historial crediticio y la compañía podría enviar un reporte negativo de su cuenta a Buró de Crédito.",
+      "noDecir": [
+        {
+          "frase": "Lo vamos a reportar y no va a volver a tener crédito.",
+          "porque": "Informar una consecuencia posible no es amenazar."
+        },
+        {
+          "frase": "Si no paga, queda en buró de por vida.",
+          "porque": "Evita exageraciones y datos que no se pueden sostener."
+        },
+        {
+          "frase": "La extensión le limpia su historial.",
+          "porque": "Solo se puede afirmar lo que confirma la política."
+        }
+      ],
+      "cierre": "Todavía está a tiempo de regularizar. Voy a registrar el compromiso para el día [fecha] a las [hora].",
+      "etiquetas": [
+        "buro",
+        "buro de credito",
+        "historial",
+        "reporte negativo",
+        "reportar",
+        "score",
+        "boletinado",
+        "historial crediticio"
+      ]
+    },
+    {
+      "id": "cons-nuevos-creditos",
+      "categoria": "consecuencias",
+      "titulo": "Dificultad para nuevos créditos o menores montos",
+      "situacion": "Pierde acceso a renovaciones, montos más altos o mejores condiciones.",
+      "aplicaEn": [
+        "sin-trabajo",
+        "otras-deudas"
+      ],
+      "respuesta": "Entiendo que ahorita no es fácil. Regularizar ahora le ayuda a que más adelante vuelva a tener acceso a crédito con nosotros.",
+      "contraste": "La extensión le permite regularizar sin afectar el reporte por ese pago.",
+      "firme": "Si continúa sin pagar, podría tener problemas para solicitar un nuevo préstamo en el futuro.",
+      "noDecir": [
+        {
+          "frase": "Lo vamos a reportar y no va a volver a tener crédito.",
+          "porque": "Informar una consecuencia posible no es amenazar."
+        }
+      ],
+      "cierre": "¿Qué monto podría manejar esta semana? Voy a registrar el compromiso para el día [fecha] a las [hora].",
+      "etiquetas": [
+        "nuevos creditos",
+        "renovacion",
+        "renovar",
+        "otro prestamo",
+        "prestamo nuevo",
+        "montos mas altos",
+        "mejores condiciones",
+        "volver a pedir",
+        "ya no me prestan"
+      ]
+    },
+    {
+      "id": "cons-beneficios",
+      "categoria": "consecuencias",
+      "titulo": "Pérdida de beneficios actuales",
+      "situacion": "Deja de estar disponible la extensión con descuento u otras promociones.",
+      "aplicaEn": [
+        "ext-cuanto-cuesta",
+        "ext-lo-mismo"
+      ],
+      "respuesta": "La opción con descuento aplica hasta el [fecha]. Después puede ya no estar disponible. Aprovechémosla hoy.",
+      "alternativas": [
+        {
+          "etiqueta": "Frase segura",
+          "texto": "Hoy tiene esta opción; después puede no estar disponible."
+        }
+      ],
+      "contraste": "La extensión con descuento es la oportunidad que se pierde.",
+      "firme": {
+        "texto": "Si lo dejamos para mañana, el valor incrementa. ¿Qué prefiere, asegurar el valor actual en este momento o asumir el aumento?",
+        "nota": "Solo si el valor realmente cambia."
+      },
+      "noDecir": [
+        {
+          "frase": "Es su última oportunidad. (si no lo es)",
+          "porque": "Crear urgencia falsa es engaño."
+        },
+        {
+          "frase": "Le puedo conseguir un descuento mayor si me dice que sí hoy.",
+          "porque": "No ofrecer descuentos que no están autorizados."
+        }
+      ],
+      "cierre": "La opción con descuento aplica hasta el [fecha]. ¿La hacemos hoy o prefiere mañana a primera hora?",
+      "etiquetas": [
+        "descuento",
+        "promocion",
+        "beneficio",
+        "se pierde",
+        "vence",
+        "vigencia",
+        "ultima oportunidad",
+        "oferta",
+        "caduca"
+      ]
+    },
+    {
+      "id": "cons-escalamiento",
+      "categoria": "consecuencias",
+      "titulo": "Escalamiento de la gestión",
+      "situacion": "El caso pasa a otra etapa o a un equipo de cobranza distinto, con más contactos.",
+      "aplicaEn": [
+        "promesero",
+        "no-me-llamen",
+        "ext-ya-no-me-llaman"
+      ],
+      "respuesta": "Mi intención es resolverlo con usted ahora. Si no se logra, el caso pasa a la siguiente etapa de gestión. ¿Buscamos una opción hoy?",
+      "alternativas": [
+        {
+          "etiqueta": "Frase segura",
+          "texto": "El caso pasa a la siguiente etapa de gestión."
+        },
+        "Mi objetivo es ayudarle a evitar que llegue a esa etapa."
+      ],
+      "contraste": "Con la extensión se actualiza su estatus y su fecha de pago.",
+      "firme": "En este momento, su cuenta ya se encuentra en atraso avanzado. Si hoy no se registra un pago, el crédito continuará con un proceso más intensivo de recuperación. Por eso es importante resolverlo ahora.",
+      "noDecir": [
+        {
+          "frase": "Esto se va a poner muy feo.",
+          "porque": "El tono intimidatorio es falta de cumplimiento."
+        },
+        {
+          "frase": "Si no paga, ya no le puedo ayudar.",
+          "porque": "Evita el ultimátum: mantén la puerta abierta."
+        }
+      ],
+      "cierre": "¿Buscamos una opción hoy? Voy a registrar el compromiso para el día [fecha] a las [hora].",
+      "etiquetas": [
+        "escalamiento",
+        "siguiente etapa",
+        "otra area",
+        "otro equipo",
+        "mas llamadas",
+        "mas contactos",
+        "intensivo",
+        "recuperacion",
+        "pasa a otra etapa"
+      ]
+    },
+    {
+      "id": "cons-saldo",
+      "categoria": "consecuencias",
+      "titulo": "Saldo pendiente que no baja",
+      "situacion": "Los abonos pequeños cubren cargos y el capital casi no se mueve.",
+      "aplicaEn": [
+        "ext-abono",
+        "otras-deudas"
+      ],
+      "respuesta": "Su abono ayuda, pero con el atraso corriendo gran parte se va a cargos. Con la extensión el atraso se frena.",
+      "contraste": "La extensión detiene el atraso mientras llega el pago completo.",
+      "firme": "La falta de pago no cancela la deuda, solo incrementa sus consecuencias.",
+      "noDecir": [
+        {
+          "frase": "Dar montos aproximados o «más o menos».",
+          "porque": "El cliente puede reclamar diferencias."
+        }
+      ],
+      "cierre": "Su saldo total es $[monto]; la extensión le permite pagar [costo] hoy. ¿La hacemos hoy o prefiere mañana a primera hora?",
+      "etiquetas": [
+        "saldo no baja",
+        "no baja",
+        "abonos",
+        "capital",
+        "sigo debiendo lo mismo",
+        "no avanza",
+        "pago y pago",
+        "nunca termino"
+      ]
+    },
+    {
+      "id": "cons-legal",
+      "categoria": "consecuencias",
+      "titulo": "Seguimiento legal o cesión de cartera",
+      "situacion": "Solo si la política y Legal lo contemplan; es una etapa tardía. Aplica muy rara vez en mora de 16-30 días.",
+      "avisos": [
+        {
+          "tipo": "importante",
+          "titulo": "No usar como presión",
+          "texto": "Responde solo si el cliente pregunta."
+        }
+      ],
+      "respuesta": {
+        "etiqueta": "Solo si el cliente pregunta",
+        "texto": "Eso depende de la etapa del caso. Lo que busco hoy es evitar que se llegue a eso."
+      },
+      "firme": null,
+      "firmeNota": "No aplica: no se usa como presión.",
+      "noDecir": [
+        {
+          "frase": "Entonces lo veremos legalmente.",
+          "porque": "No amenazar."
+        },
+        {
+          "frase": "Esto se va a poner muy feo.",
+          "porque": "El tono intimidatorio es falta de cumplimiento."
+        }
+      ],
+      "cierre": "Mi objetivo es ayudarle a evitar que llegue a esa etapa. ¿Buscamos una opción hoy?",
+      "relacionados": [
+        "firme-renuente"
+      ],
+      "etiquetas": [
+        "legal",
+        "demanda",
+        "me van a demandar",
+        "juicio",
+        "abogado",
+        "juzgado",
+        "embargo",
+        "cesion",
+        "cartera",
+        "despacho",
+        "agencia externa",
+        "carcel",
+        "me van a meter a la carcel",
+        "notificacion judicial"
+      ]
+    },
+    {
+      "id": "firme-reglas",
+      "categoria": "firme",
+      "tipo": "referencia",
+      "titulo": "Reglas del enfoque firme",
+      "situacion": "Firmeza no es amenaza: informa consecuencias reales con tono profesional.",
+      "avisos": [
+        {
+          "tipo": "importante",
+          "titulo": "No discutir. No amenazar.",
+          "texto": "Informar una consecuencia posible no es amenazar."
+        }
+      ],
+      "bloques": [
+        {
+          "tipo": "lista",
+          "titulo": "Tono de voz",
+          "items": [
+            "Mantén un tono firme, profesional y seguro en todo momento, evitando la confrontación verbal pero transmitiendo la urgencia de la situación."
+          ]
+        },
+        {
+          "tipo": "frases",
+          "titulo": "Pregunta cerrada",
+          "items": [
+            {
+              "texto": "¿Va a regularizar hoy o dejar constancia de que decide no hacerlo?",
+              "nota": "Pregunta cerrada = presión legal válida."
+            }
+          ]
+        }
+      ],
+      "noDecir": [
+        {
+          "frase": "Sí, es su deuda y punto.",
+          "porque": "No discutir."
+        },
+        {
+          "frase": "Entonces lo veremos legalmente.",
+          "porque": "No amenazar."
+        },
+        {
+          "frase": "Si no reconoce, será peor.",
+          "porque": "No amenazar."
+        },
+        {
+          "frase": "Usted firmó, no hay nada que hacer.",
+          "porque": "No discutir."
+        },
+        {
+          "frase": "Esto se va a poner muy feo.",
+          "porque": "El tono intimidatorio es falta de cumplimiento."
+        }
+      ],
+      "relacionados": [
+        "g-tono",
+        "g-consecuencias"
+      ],
+      "etiquetas": [
+        "firme",
+        "firmeza",
+        "mora alta",
+        "tono",
+        "tono de voz",
+        "como ser firme",
+        "no amenazar",
+        "no discutir",
+        "pregunta cerrada",
+        "reglas",
+        "frases prohibidas",
+        "evitar frases"
+      ]
+    },
+    {
+      "id": "firme-estructura",
+      "categoria": "firme",
+      "tipo": "referencia",
+      "titulo": "Estructura de la llamada en mora alta",
+      "situacion": "Los cuatro pasos de una llamada en mora alta.",
+      "bloques": [
+        {
+          "tipo": "pasos",
+          "titulo": "Pasos",
+          "items": [
+            {
+              "titulo": "Validación e identificación",
+              "puntos": [
+                "Confirmar identidad del titular."
+              ],
+              "ir": "verificacion"
+            },
+            {
+              "titulo": "Empatía inicial / planteamiento",
+              "puntos": [
+                "Escuchar el motivo del impago y aplicar un enfoque empático breve."
+              ],
+              "ir": "aim"
+            },
+            {
+              "titulo": "Fundamento legal y consecuencias",
+              "puntos": [
+                "Mencionar el artículo aplicable y el impacto en el cliente. La cita del artículo es solo para G3; en los demás grupos, menciona solo el impacto en el cliente."
+              ],
+              "ir": "firme-art78"
+            },
+            {
+              "titulo": "Propuesta de solución y cierre",
+              "puntos": [
+                "Ofrecer la alternativa de pago y solicitar la confirmación inmediata del compromiso."
+              ],
+              "ir": "promesa-firme"
+            }
+          ]
+        }
+      ],
+      "etiquetas": [
+        "estructura",
+        "pasos",
+        "validacion",
+        "empatia",
+        "fundamento legal",
+        "solucion",
+        "estructura de la llamada"
+      ]
+    },
+    {
+      "id": "firme-art78",
+      "categoria": "firme",
+      "titulo": "Excusas o motivos personales",
+      "situacion": "El cliente presenta excusas o motivos personales para no pagar. Objetivo: explicar que los contratos aceptados deben cumplirse y prevenir afectaciones crediticias.",
+      "respuesta": "Sr./Sra. [nombre], lamento escuchar esto; sin embargo, de acuerdo con los términos y condiciones que usted aceptó, no hay ninguna cláusula que indique que por [motivo] usted queda exento de realizar su pago. Si continúa sin pagar, podría enfrentar mal historial crediticio y la compañía podría enviar un reporte negativo de su cuenta a Buró de Crédito. Además, podría tener problemas para solicitar un nuevo préstamo en el futuro. Podemos evitar esto si hace el pago total de su deuda o puede hacer el pago de [monto] para activar una extensión de su fecha límite por 15 días; esto le ayudará a poner su cuenta al corriente, le evitará generar mal historial crediticio y tendrá más tiempo para resolver su deuda. ¿Procedemos a agendar su pago?",
+      "firme": null,
+      "soloG3": {
+        "etiqueta": "Art. 78 del Código de Comercio",
+        "texto": "Lamento mucho escuchar su situación; sin embargo, de acuerdo con el Artículo 78 del Código de Comercio y los términos y condiciones que usted aceptó al contratar, no existe ninguna cláusula que indique que queda exento de realizar su pago. Es importante señalar dos consecuencias directas de no liquidar: si continúa sin pagar, podría enfrentar un mal historial crediticio y la compañía podría enviar un reporte negativo de su cuenta a Buró de Crédito; además, podría tener problemas para solicitar un nuevo préstamo en el futuro. Quiero ayudarle a evitar esto. Le sugiero que haga el pago de $[total] mañana antes de las 3:00 p.m. Por favor, confírmeme."
+      },
+      "noDecir": [
+        {
+          "frase": "Lo vamos a reportar y no va a volver a tener crédito.",
+          "porque": "Informar una consecuencia posible no es amenazar."
+        },
+        {
+          "frase": "Si no paga, queda en buró de por vida.",
+          "porque": "Evita exageraciones y datos que no se pueden sostener."
+        },
+        {
+          "frase": "Usted firmó, no hay nada que hacer.",
+          "porque": "No discutir."
+        }
+      ],
+      "cierre": "¿Procedemos a agendar su pago? Voy a registrar el compromiso para el día [fecha] a las [hora].",
+      "relacionados": [
+        "sin-trabajo",
+        "cons-buro",
+        "oferta-extension"
+      ],
+      "etiquetas": [
+        "articulo 78",
+        "art 78",
+        "codigo de comercio",
+        "excusas",
+        "motivos personales",
+        "terminos y condiciones",
+        "clausula",
+        "exento",
+        "contrato",
+        "fundamento legal",
+        "script para cliente con atraso",
+        "cliente con atraso",
+        "articulo",
+        "articulos",
+        "solo g3",
+        "g3"
+      ],
+      "insignia": "Art. 78: solo G3"
+    },
+    {
+      "id": "firme-liquidez",
+      "categoria": "firme",
+      "titulo": "Falta total de liquidez o evita dar fechas",
+      "situacion": "El cliente argumenta falta total de liquidez inmediata o evita dar fechas.",
+      "respuesta": "Comprendo su situación; sin embargo, la obligación de pago sigue vigente y, en esta etapa, no contar con recursos no detiene el proceso ni los cargos. Quiero ayudarle a evitarlo: le sugiero hacer el pago de su extensión de $[costo extensión] mañana antes de las 3:00 p.m. Por favor, confírmeme.",
+      "alternativas": [
+        {
+          "etiqueta": "Si evita dar fechas",
+          "texto": "¿Le parece si agendamos el pago para el día [fecha] a las [hora] y le marco antes?"
+        },
+        {
+          "etiqueta": "Pregunta de sondeo",
+          "texto": "Si el pago fuera en otra fecha, ¿le sería posible cumplirlo?"
+        }
+      ],
+      "firme": "En este momento, su cuenta ya se encuentra en atraso avanzado. Si hoy no se registra un pago, el crédito continuará con un proceso más intensivo de recuperación. Por eso es importante resolverlo ahora.",
+      "soloG3": {
+        "etiqueta": "Art. 83 del Código de Comercio",
+        "texto": "Supongo que usted está al tanto o podría saber que, de acuerdo con el Artículo 83 del Código de Comercio, para exigir el pago completo, la empresa puede tomar todas las acciones legítimas, como: múltiples llamadas por la mañana y por la noche, enviarle SMS, emails, notificaciones judiciales, así como visitas a su domicilio y trabajo. Quiero ayudarlo a evitar esto; usted podrá pagar $[costo extensión] (extensión) mañana antes de las 3:00 p.m. Por favor, confírmeme."
+      },
+      "noDecir": [
+        {
+          "frase": "Pedir al tercero que pague o se haga responsable.",
+          "porque": "Solo el titular puede responder por el crédito."
+        },
+        {
+          "frase": "Entonces lo veremos legalmente.",
+          "porque": "No amenazar."
+        },
+        {
+          "frase": "Aceptar cualquier fecha para cerrar la llamada.",
+          "porque": "Una fecha realista mejora la calidad de la promesa."
+        }
+      ],
+      "cierre": "Le sugiero hacer el pago de su extensión de $[costo extensión] mañana antes de las 3:00 p.m. Voy a registrar el compromiso para el día [fecha] a las [hora]. Por favor, confírmeme.",
+      "relacionados": [
+        "no-tengo-dinero",
+        "ext-sin-liquidez"
+      ],
+      "etiquetas": [
+        "falta de liquidez",
+        "sin liquidez",
+        "no tengo nada",
+        "evita fechas",
+        "no da fecha",
+        "no quiere dar fecha",
+        "no se cuando",
+        "no se cuando pague",
+        "articulo 83",
+        "art 83",
+        "codigo de comercio",
+        "fundamento legal",
+        "articulo",
+        "articulos",
+        "solo g3",
+        "g3"
+      ],
+      "insignia": "Art. 83: solo G3"
+    },
+    {
+      "id": "firme-renuente",
+      "categoria": "firme",
+      "titulo": "Atraso considerable o cliente renuente a negociar",
+      "situacion": "El pago tiene un retraso considerable o el cliente se muestra renuente a negociar.",
+      "respuesta": "Es importante que sepa que, si no logramos un acuerdo, su cuenta pasa a la siguiente etapa de gestión y podría ser asignada a una agencia de cobranza externa. Para evitarlo, le sugiero hacer el pago de su extensión de $[costo extensión] mañana antes de las 3:00 p.m. para demostrar su compromiso. Por favor, confírmeme.",
+      "firme": "Queda claro lo que me indica. Debo informarle que la decisión de no pagar no cancela la deuda ni detiene el proceso de recuperación del adeudo pendiente. En este momento, su cuenta continúa en estatus de impago, continúa generando cargos y seguirá con acciones de cobro más intensivas.",
+      "soloG3": {
+        "etiqueta": "Art. 389 del Código de Comercio",
+        "texto": "Es importante que sepa que, de acuerdo con el Artículo 389 del Código de Comercio, la empresa puede asignar su cuenta a agencias de cobranza externa; como resultado, puede experimentar un enfoque menos amigable y una forma de cobro poco tolerante. Para evitar esto, sugiero hacer su pago de $[costo extensión] (extensión) mañana antes de las 3:00 p.m. para demostrar que tiene compromiso. Por favor, confírmeme."
+      },
+      "noDecir": [
+        {
+          "frase": "Esto se va a poner muy feo.",
+          "porque": "El tono intimidatorio es falta de cumplimiento."
+        },
+        {
+          "frase": "Es su última oportunidad. (si no lo es)",
+          "porque": "Crear urgencia falsa es engaño."
+        },
+        {
+          "frase": "Si no paga, ya no le puedo ayudar.",
+          "porque": "Evita el ultimátum: mantén la puerta abierta."
+        }
+      ],
+      "cierre": "¿Va a regularizar hoy o dejar constancia de que decide no hacerlo? Si lo hacemos hoy, registro su pago para el día [fecha] a las [hora].",
+      "relacionados": [
+        "no-voy-a-pagar",
+        "cons-legal",
+        "cons-escalamiento"
+      ],
+      "etiquetas": [
+        "renuente",
+        "no quiere negociar",
+        "atraso considerable",
+        "mora alta",
+        "agencia externa",
+        "despacho externo",
+        "articulo 389",
+        "art 389",
+        "cesion",
+        "se niega a negociar",
+        "codigo de comercio",
+        "fundamento legal",
+        "articulo",
+        "articulos",
+        "solo g3",
+        "g3"
+      ],
+      "insignia": "Art. 389: solo G3"
+    },
+    {
+      "id": "promesa-firme",
+      "categoria": "cierre",
+      "titulo": "Promesa firme",
+      "situacion": "Confirma el acuerdo y repasa los detalles de pago antes de colgar.",
+      "respuesta": "Por favor, confirme que durante la llamada llegamos al siguiente acuerdo: usted estará pagando $[monto] hoy antes de las 3 p.m. vía transferencia bancaria; le mandaré su referencia por WhatsApp.",
+      "bloques": [
+        {
+          "tipo": "pasos",
+          "titulo": "Pasos",
+          "items": [
+            {
+              "titulo": "Acuerdo",
+              "texto": "Por favor, confirme que durante la llamada llegamos al siguiente acuerdo."
+            },
+            {
+              "titulo": "Detalles de pago (recap)",
+              "puntos": [
+                "Cantidad acordada (ej. $2,000 MXN)",
+                "Lugar (transferencia STP)",
+                "Fecha límite (hoy a las 3 p.m.)",
+                "Canal de pago"
+              ],
+              "texto": "Usted estará pagando hoy antes de las 3 p.m. vía transferencia bancaria; le mandaré su referencia por WhatsApp."
+            },
+            {
+              "titulo": "Recordatorio (úsalo solo en caso de dudas)",
+              "texto": "Si no realiza su pago a tiempo, comenzará a recibir llamadas y mensajes de parte del departamento de cobranza."
+            },
+            {
+              "titulo": "Por qué antes de las 3 p.m.",
+              "texto": "Debe pagar antes de las 3 p.m. de mañana, ya que algunos comercios solo están abiertos hasta cierto horario; si el comercio o banco retrasa el pago, podría verse afectado. Dado que la empresa solo opera hasta las 5 p.m., si paga temprano puede evitar que su cuenta se traslade al departamento de cobranza. Por favor, confírmeme."
+            }
+          ]
+        }
+      ],
+      "noDecir": [
+        {
+          "frase": "Ok, entonces quedamos. (sin fecha ni hora)",
+          "porque": "Una promesa sin detalle casi nunca se cumple."
+        },
+        {
+          "frase": "Con eso queda, no se preocupe.",
+          "porque": "Sin fecha y hora no hay promesa que dar seguimiento."
+        }
+      ],
+      "cierre": "Quedamos en [acuerdo, monto, fecha y hora]. Le agradezco su tiempo.",
+      "relacionados": [
+        "recap",
+        "registro-compromiso",
+        "g-promesas"
+      ],
+      "etiquetas": [
+        "promesa",
+        "promesa firme",
+        "promesa de pago",
+        "acuerdo",
+        "compromiso",
+        "confirmar acuerdo",
+        "recap",
+        "referencia",
+        "stp",
+        "transferencia",
+        "whatsapp",
+        "3 pm",
+        "tres de la tarde",
+        "hora limite",
+        "fecha limite",
+        "cerrar la promesa"
+      ],
+      "tipo": "referencia"
+    },
+    {
+      "id": "recap",
+      "categoria": "cierre",
+      "tipo": "referencia",
+      "titulo": "RECAP: último mensaje",
+      "situacion": "El último mensaje es lo que se quedará en el cliente; es lo último que pensará. Debe ser conciso, directo y asertivo.",
+      "respuesta": "Quedamos en [acuerdo, monto, fecha y hora]. Le agradezco su tiempo.",
+      "alternativas": [
+        "Voy a registrar el compromiso para el día [fecha] a las [hora]."
+      ],
+      "noDecir": [
+        {
+          "frase": "Bueno, ya luego hablamos.",
+          "porque": "Un cierre claro facilita el seguimiento y el monitoreo."
+        }
+      ],
+      "relacionados": [
+        "promesa-firme",
+        "cierre-llamada"
+      ],
+      "etiquetas": [
+        "recap",
+        "resumen",
+        "ultimo mensaje",
+        "repetir acuerdo",
+        "confirmar acuerdo",
+        "asertivo"
+      ]
+    },
+    {
+      "id": "cierre-llamada",
+      "categoria": "cierre",
+      "tipo": "referencia",
+      "titulo": "Cierre de la llamada",
+      "situacion": "Agradece el tiempo en llamada, reitera tu nombre y menciona tus datos de contacto.",
+      "respuesta": "Quedamos en [acuerdo, monto, fecha y hora]. Le agradezco su tiempo. Le dejo mi nombre y número por si necesita algo: [tu nombre], [número].",
+      "alternativas": [
+        {
+          "etiqueta": "Pregunta de cierre con opciones",
+          "texto": "¿La hacemos hoy o prefiere mañana a primera hora?"
+        },
+        {
+          "etiqueta": "Si no hubo acuerdo",
+          "texto": "Respeto su decisión. Si cambia de opinión, aquí estoy."
+        }
+      ],
+      "noDecir": [
+        {
+          "frase": "Bueno, ya luego hablamos.",
+          "porque": "Un cierre claro facilita el seguimiento y el monitoreo."
+        },
+        {
+          "frase": "¿Entonces qué decide? (pregunta abierta)",
+          "porque": "La pregunta de cierre con opciones ayuda a avanzar."
+        },
+        {
+          "frase": "Colgar sin dejar vía de contacto.",
+          "porque": "Mantiene el canal abierto para el cliente."
+        },
+        {
+          "frase": "Entonces no se queje después.",
+          "porque": "Cerrar con respeto deja abierta la negociación futura."
+        }
+      ],
+      "relacionados": [
+        "recap",
+        "g-cierre"
+      ],
+      "etiquetas": [
+        "cierre",
+        "despedida",
+        "colgar",
+        "terminar llamada",
+        "agradecer",
+        "datos de contacto",
+        "mi numero",
+        "como cierro",
+        "como termino"
+      ]
+    },
+    {
+      "id": "registro-compromiso",
+      "categoria": "cierre",
+      "tipo": "referencia",
+      "titulo": "Registro del compromiso",
+      "situacion": "Al finalizar la llamada, anota de inmediato en el sistema la fecha, la hora exacta y el monto acordado. La hora límite es antes de las 3:00 p.m. del día siguiente, para dar seguimiento oportuno.",
+      "respuesta": "Voy a registrar el compromiso para el día [fecha] a las [hora].",
+      "bloques": [
+        {
+          "tipo": "lista",
+          "titulo": "Qué registrar",
+          "items": [
+            "Fecha",
+            "Hora exacta",
+            "Monto acordado",
+            "Medio o canal de pago"
+          ]
+        }
+      ],
+      "noDecir": [
+        {
+          "frase": "Con eso queda, no se preocupe.",
+          "porque": "Sin fecha y hora no hay promesa que dar seguimiento."
+        },
+        {
+          "frase": "Ok, entonces quedamos. (sin fecha ni hora)",
+          "porque": "Una promesa sin detalle casi nunca se cumple."
+        }
+      ],
+      "relacionados": [
+        "promesa-firme"
+      ],
+      "etiquetas": [
+        "registrar",
+        "registro",
+        "crm",
+        "anotar",
+        "sistema",
+        "compromiso",
+        "seguimiento",
+        "nota",
+        "hora exacta"
+      ]
+    },
+    {
+      "id": "g-consecuencias",
+      "categoria": "guias",
+      "tipo": "referencia",
+      "titulo": "Consecuencias del no pago",
+      "bloques": [
+        {
+          "tipo": "guia",
+          "items": [
+            {
+              "si": "Si el atraso continúa, el saldo puede seguir creciendo por los cargos aplicables.",
+              "no": "Se le va a duplicar la deuda.",
+              "porque": "Hay que ser exacto y verificable, sin exagerar."
+            },
+            {
+              "si": "Si el atraso continúa, puede afectar su historial crediticio.",
+              "no": "Lo vamos a reportar y no va a volver a tener crédito.",
+              "porque": "Informar una consecuencia posible no es amenazar."
+            },
+            {
+              "si": "El caso pasa a la siguiente etapa de gestión.",
+              "no": "Esto se va a poner muy feo.",
+              "porque": "El tono intimidatorio es falta de cumplimiento."
+            },
+            {
+              "si": "Hoy tiene esta opción; después puede no estar disponible.",
+              "no": "Es su última oportunidad. (si no lo es)",
+              "porque": "Crear urgencia falsa es engaño."
+            },
+            {
+              "si": "Mi objetivo es ayudarle a evitar que llegue a esa etapa.",
+              "no": "Si no paga, ya no le puedo ayudar.",
+              "porque": "Mantiene la puerta abierta y evita el ultimátum."
+            }
+          ]
+        }
+      ],
+      "etiquetas": [
+        "consecuencias",
+        "si decir",
+        "no decir",
+        "amenaza",
+        "exagerar",
+        "duplicar",
+        "ultima oportunidad",
+        "ultimatum"
+      ]
+    },
+    {
+      "id": "g-buro",
+      "categoria": "guias",
+      "tipo": "referencia",
+      "titulo": "Buró y extensión",
+      "bloques": [
+        {
+          "tipo": "guia",
+          "items": [
+            {
+              "si": "El pago de la extensión, completa o con descuento, no se reporta negativo a buró.",
+              "no": "La extensión le limpia su historial.",
+              "porque": "Solo se puede afirmar lo que confirma la política."
+            },
+            {
+              "si": "Si el atraso continúa, sí puede reflejarse en su historial.",
+              "no": "Si no paga, queda en buró de por vida.",
+              "porque": "Evita exageraciones y datos que no se pueden sostener."
+            },
+            {
+              "si": "Le confirmo las condiciones por [canal] antes de que pague.",
+              "no": "Confíe en mí, no le va a pasar nada.",
+              "porque": "Dar evidencia genera confianza; las garantías verbales no."
+            },
+            {
+              "si": "Eso no lo puedo asegurar; déjeme confirmarlo y le aviso.",
+              "no": "Inventar una respuesta para no perder la venta.",
+              "porque": "Una promesa falsa genera quejas y pérdida de confianza."
+            }
+          ]
+        }
+      ],
+      "etiquetas": [
+        "buro",
+        "extension",
+        "historial",
+        "limpia historial",
+        "garantias",
+        "inventar",
+        "si decir",
+        "no decir"
+      ]
+    },
+    {
+      "id": "g-montos",
+      "categoria": "guias",
+      "tipo": "referencia",
+      "titulo": "Plazos, montos y descuentos",
+      "bloques": [
+        {
+          "tipo": "guia",
+          "items": [
+            {
+              "si": "La extensión cuesta [costo] y su nueva fecha de pago es [fecha].",
+              "no": "Es un costo mínimo, no se preocupe.",
+              "porque": "Siempre se dice el monto exacto y la fecha."
+            },
+            {
+              "si": "La opción con descuento aplica hasta el [fecha].",
+              "no": "Le puedo conseguir un descuento mayor si me dice que sí hoy.",
+              "porque": "No ofrecer descuentos que no están autorizados."
+            },
+            {
+              "si": "Su saldo total es $[monto]; la extensión le permite pagar [costo] hoy.",
+              "no": "Dar montos aproximados o «más o menos».",
+              "porque": "El cliente puede reclamar diferencias."
+            },
+            {
+              "si": "Voy a registrar el compromiso para el día [fecha] a las [hora].",
+              "no": "Con eso queda, no se preocupe.",
+              "porque": "Sin fecha y hora no hay promesa que dar seguimiento."
+            }
+          ]
+        }
+      ],
+      "etiquetas": [
+        "plazos",
+        "montos",
+        "descuentos",
+        "costo",
+        "monto exacto",
+        "aproximado",
+        "descuento mayor",
+        "si decir",
+        "no decir"
+      ]
+    },
+    {
+      "id": "g-terceros",
+      "categoria": "guias",
+      "tipo": "referencia",
+      "titulo": "Terceros y privacidad",
+      "bloques": [
+        {
+          "tipo": "guia",
+          "items": [
+            {
+              "si": "Busco al señor/señora [nombre]. ¿Sabe cómo puedo localizarlo?",
+              "no": "Llamo de [empresa] por una deuda de $[monto].",
+              "porque": "Revelar la deuda a un tercero es falta grave."
+            },
+            {
+              "si": "¿Le puede pedir que se comunique conmigo al [número]?",
+              "no": "Dígale que más le vale pagar.",
+              "porque": "Los terceros no tienen que enterarse del adeudo."
+            },
+            {
+              "si": "Gracias por avisarme, actualizo mis registros.",
+              "no": "Seguro usted sabe dónde está.",
+              "porque": "Presionar a terceros puede generar quejas y sanciones."
+            },
+            {
+              "si": "Disculpe la molestia. (y cerrar bien)",
+              "no": "Pedir al tercero que pague o se haga responsable.",
+              "porque": "Solo el titular puede responder por el crédito."
+            }
+          ]
+        }
+      ],
+      "relacionados": [
+        "terceros-script",
+        "terceros-no-es",
+        "terceros-no-conozco"
+      ],
+      "etiquetas": [
+        "terceros",
+        "privacidad",
+        "referencia",
+        "contacto de referencia",
+        "familiar",
+        "conocido",
+        "revelar deuda",
+        "localizar",
+        "recado",
+        "si decir",
+        "no decir"
+      ]
+    },
+    {
+      "id": "g-tono",
+      "categoria": "guias",
+      "tipo": "referencia",
+      "titulo": "Tono y respeto",
+      "bloques": [
+        {
+          "tipo": "guia",
+          "items": [
+            {
+              "si": "Entiendo, [nombre]. Quiero ayudarle a resolverlo.",
+              "no": "Eso no me importa.",
+              "porque": "La empatía mantiene la llamada y abre la negociación."
+            },
+            {
+              "si": "Tiene todo el derecho de molestarse. ¿Me da un minuto?",
+              "no": "Responder con el mismo tono o subir la voz.",
+              "porque": "Cuando el cliente está a la defensiva, la calma baja la tensión."
+            },
+            {
+              "si": "Lamento lo que está pasando. (si el cliente cuenta una situación personal)",
+              "no": "Eso le pasa a todos.",
+              "porque": "Minimizar hace perder la confianza del cliente."
+            },
+            {
+              "si": "Respeto su decisión. Si cambia de opinión, aquí estoy.",
+              "no": "Entonces no se queje después.",
+              "porque": "Cerrar con respeto deja abierta la negociación futura."
+            }
+          ]
+        }
+      ],
+      "etiquetas": [
+        "tono",
+        "respeto",
+        "empatia",
+        "molesto",
+        "enojado",
+        "gritar",
+        "subir la voz",
+        "minimizar",
+        "si decir",
+        "no decir"
+      ]
+    },
+    {
+      "id": "g-identidad",
+      "categoria": "guias",
+      "tipo": "referencia",
+      "titulo": "Confirmación de identidad",
+      "bloques": [
+        {
+          "tipo": "guia",
+          "items": [
+            {
+              "si": "Para confirmar que hablo con la persona correcta, ¿me confirma que usted es el Sr./Sra. [nombre y apellido]?",
+              "no": "¿Es usted [nombre], el que debe $[monto]?",
+              "porque": "Primero se confirma la identidad y después se habla del adeudo."
+            },
+            {
+              "si": "¿Me puede confirmar su nombre y apellido, por favor?",
+              "no": "Continuar con un «sí, dígame» o «¿quién lo busca?».",
+              "porque": "Solo se continúa cuando la persona confirma con claridad que es el titular."
+            },
+            {
+              "si": "Entiendo. Si en algún momento decide atenderlo, tengo una opción para usted.",
+              "no": "¿Está seguro que no es usted?",
+              "porque": "Confrontar cierra la llamada."
+            },
+            {
+              "si": "Gracias, ya puedo hablarle con confianza. (tras confirmar)",
+              "no": "Dar datos del adeudo antes de confirmar la identidad.",
+              "porque": "Protege los datos del cliente."
+            }
+          ]
+        }
+      ],
+      "relacionados": [
+        "verificacion",
+        "no-soy-titular",
+        "terceros-script"
+      ],
+      "etiquetas": [
+        "verificacion",
+        "identidad",
+        "titular",
+        "confrontar",
+        "si decir",
+        "no decir",
+        "nombre y apellido"
+      ]
+    },
+    {
+      "id": "g-promesas",
+      "categoria": "guias",
+      "tipo": "referencia",
+      "titulo": "Promesas de pago",
+      "bloques": [
+        {
+          "tipo": "guia",
+          "items": [
+            {
+              "si": "¿A qué hora y por qué medio hará el pago? Le marco para confirmar.",
+              "no": "Ok, entonces quedamos. (sin fecha ni hora)",
+              "porque": "Una promesa sin detalle casi nunca se cumple."
+            },
+            {
+              "si": "La vez pasada quedamos en [fecha]. ¿Qué cambió?",
+              "no": "Siempre dice lo mismo.",
+              "porque": "Se confronta el hecho, no a la persona."
+            },
+            {
+              "si": "Busquemos una fecha que sí sea realista para usted.",
+              "no": "Aceptar cualquier fecha para cerrar la llamada.",
+              "porque": "Mejora la calidad de la promesa."
+            }
+          ]
+        }
+      ],
+      "relacionados": [
+        "promesa-firme",
+        "promesero"
+      ],
+      "etiquetas": [
+        "promesas",
+        "promesa de pago",
+        "fecha y hora",
+        "medio de pago",
+        "promesa rota",
+        "fecha realista",
+        "si decir",
+        "no decir"
+      ]
+    },
+    {
+      "id": "g-cierre",
+      "categoria": "guias",
+      "tipo": "referencia",
+      "titulo": "Cierre de llamada",
+      "bloques": [
+        {
+          "tipo": "guia",
+          "items": [
+            {
+              "si": "Quedamos en [acuerdo, monto, fecha y hora]. Le agradezco su tiempo.",
+              "no": "Bueno, ya luego hablamos.",
+              "porque": "Un cierre claro facilita el seguimiento y el monitoreo."
+            },
+            {
+              "si": "¿La hacemos hoy o prefiere mañana a primera hora?",
+              "no": "¿Entonces qué decide? (pregunta abierta)",
+              "porque": "La pregunta de cierre con opciones ayuda a avanzar."
+            },
+            {
+              "si": "Le dejo mi nombre y número por si necesita algo.",
+              "no": "Colgar sin dejar vía de contacto.",
+              "porque": "Mantiene el canal abierto para el cliente."
+            }
+          ]
+        }
+      ],
+      "relacionados": [
+        "cierre-llamada",
+        "recap"
+      ],
+      "etiquetas": [
+        "cierre",
+        "despedida",
+        "pregunta de cierre",
+        "datos de contacto",
+        "colgar",
+        "si decir",
+        "no decir"
+      ]
+    }
+  ]
+};
+
+/* =====================================================================
+   APLICACIÓN (no es necesario editar debajo de esta línea)
+   ===================================================================== */
+(function () {
+  'use strict';
+  const D = LUDOTECA;
+  const $ = (s, el) => (el || document).querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const arr = (x) => (x == null ? [] : Array.isArray(x) ? x : [x]);
+  const sObj = (x) => (x == null ? null : typeof x === 'string' ? { texto: x } : x);
+  const sText = (x) => (x == null ? '' : typeof x === 'string' ? x : x.texto || '');
+
+  const CAT = {}; D.categorias.forEach((c) => { CAT[c.id] = c; });
+  const SC = {}; D.escenarios.forEach((s) => { SC[s.id] = s; });
+  const BY = {}; D.categorias.forEach((c) => { BY[c.id] = []; });
+  D.escenarios.forEach((s) => { (BY[s.categoria] = BY[s.categoria] || []).push(s); });
+
+  /* ---------- Íconos ---------- */
+  const P = {
+    phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>',
+    chat: '<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/>',
+    calendar: '<rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 10h18M12 13.5v5M9.5 16h5"/>',
+    alert: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+    shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    check: '<path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="M22 4 12 14l-3-3"/>',
+    list: '<path d="M10 6h11M10 12h11M10 18h11"/><path d="m3 6 1.3 1.3L6.8 4.8M3 12l1.3 1.3 2.5-2.5"/><path d="m3.5 16.5 3 3M6.5 16.5l-3 3"/>',
+    home: '<path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V13h6v9"/>',
+    flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>',
+    copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    ok: '<path d="M20 6 9 17l-5-5"/>',
+    x: '<path d="M18 6 6 18M6 6l12 12"/>',
+    back: '<path d="M19 12H5M12 19l-7-7 7-7"/>',
+    sun: '<circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M1.5 12H4M20 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/>',
+    moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+    arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+    info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>'
+  };
+  const ic = (n) => '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">' + (P[n] || '') + '</svg>';
+
+  /* ---------- Normalización y búsqueda ---------- */
+  function normChars(str) {
+    // Misma longitud que el original: permite resaltar sobre el texto con acentos
+    let out = '';
+    for (let i = 0; i < str.length; i++) {
+      let d = str[i].normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      d = d.length ? d[0] : ' ';
+      out += /[a-z0-9]/.test(d) ? d : ' ';
+    }
+    return out;
+  }
+  const norm = (s) => normChars(String(s || '')).replace(/\s+/g, ' ').trim();
+
+  function osa(a, b, max) {
+    const la = a.length, lb = b.length;
+    if (Math.abs(la - lb) > max) return max + 1;
+    let p2 = null, p1 = new Array(lb + 1);
+    for (let j = 0; j <= lb; j++) p1[j] = j;
+    for (let i = 1; i <= la; i++) {
+      const cur = new Array(lb + 1); cur[0] = i; let rowMin = i;
+      for (let j = 1; j <= lb; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        let v = Math.min(p1[j] + 1, cur[j - 1] + 1, p1[j - 1] + cost);
+        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, p2[j - 2] + 1);
+        cur[j] = v; if (v < rowMin) rowMin = v;
+      }
+      if (rowMin > max) return max + 1;
+      p2 = p1; p1 = cur;
+    }
+    return p1[lb];
+  }
+  const maxD = (n) => (n < 4 ? 0 : n < 7 ? 1 : 2);
+  const STOP = new Set('a al como con de del e el en es esa ese eso esta este esto estoy fue la las le les lo los me mi mis mas muy ni no nos o para pero por pues que se si su sus te tu u un una unas unos usted ustedes y ya yo'.split(' '));
+  const SYN = arr(D.sinonimos).map((g) => g.map(norm).filter(Boolean));
+
+  function collect(s) {
+    const scripts = [], otros = [];
+    const push = (x) => { const o = sObj(x); if (!o) return; if (o.texto) scripts.push(o.texto); if (o.etiqueta) otros.push(o.etiqueta); if (o.nota) otros.push(o.nota); };
+    push(s.respuesta); arr(s.alternativas).forEach(push); push(s.firme); push(s.soloG3); arr(s.cierre).forEach(push);
+    if (s.firmeNota) otros.push(s.firmeNota);
+    arr(s.avisos).forEach((a) => { otros.push(a.titulo || '', a.texto || ''); arr(a.pasos).forEach((p) => otros.push(p)); if (a.frase) push(a.frase); });
+    arr(s.bloques).forEach((b) => {
+      otros.push(b.titulo || '');
+      arr(b.items).forEach((it) => {
+        if (typeof it === 'string') { (b.tipo === 'lista' ? otros : scripts).push(it); return; }
+        if (b.tipo === 'guia') { scripts.push(it.si || ''); otros.push(it.no || '', it.porque || ''); return; }
+        if (it.titulo) otros.push(it.titulo);
+        arr(it.puntos).forEach((p) => otros.push(p));
+        push(it);
+      });
+    });
+    arr(s.noDecir).forEach((n) => otros.push(n.frase || '', n.porque || ''));
+    if (s.contraste) scripts.push(s.contraste);
+    return { scripts, otros };
+  }
+
+  const IDX = D.escenarios.map((s) => {
+    const t = collect(s);
+    const f = [
+      ['titulo', 10, s.titulo],
+      ['etiquetas', 9, arr(s.etiquetas).join(' | ')],
+      ['clienteDice', 8, arr(s.clienteDice).join(' | ')],
+      ['arquetipo', 6, s.arquetipo || ''],
+      ['situacion', 4, s.situacion || ''],
+      ['scripts', 3, t.scripts.join(' | ')],
+      ['otros', 2, t.otros.join(' | ') + ' | ' + ((CAT[s.categoria] || {}).nombre || '')]
+    ].map(([k, w, text]) => { const n = norm(text); return { k, w, n, tokens: Array.from(new Set(n.split(' ').filter(Boolean))) }; });
+    return { s, f, tags: arr(s.etiquetas).map(norm).filter(Boolean) };
+  });
+  const VOCAB = Array.from(new Set(IDX.flatMap((e) => e.f.flatMap((f) => f.tokens))));
+
+  function quality(q, t, strict) {
+    if (t === q) return 1;
+    if (q.length >= 3 && t.startsWith(q)) return 0.85;
+    if (t.length >= 5 && q.startsWith(t) && q.length - t.length <= 2) return 0.75;
+    if (strict) return 0; // los sinónimos no se comparan con tolerancia a errores
+    const m = maxD(q.length);
+    // Error de dedo: misma primera letra y 1-2 cambios (evita «quede» → «puede»)
+    if (m && t.length >= 4 && t[0] === q[0] && osa(q, t, m) <= m) return 0.7;
+    return 0;
+  }
+  const vocabCache = new Map();
+  function vocabMatches(term, strict) {
+    const key = (strict ? '=' : '~') + term;
+    if (vocabCache.has(key)) return vocabCache.get(key);
+    const m = new Map();
+    for (const t of VOCAB) { const q = quality(term, t, strict); if (q > 0) m.set(t, q); }
+    vocabCache.set(key, m);
+    return m;
+  }
+  function synHit(q, m) {
+    if (m.includes(' ')) return false;
+    if (m === q) return true;
+    const md = maxD(Math.min(m.length, q.length));
+    if (md && m[0] === q[0] && osa(m, q, md) <= md) return true;
+    return q.length >= 4 && m.startsWith(q);
+  }
+
+  function search(raw) {
+    const qn = norm(raw);
+    if (!qn) return null;
+    const toks = qn.split(' ');
+    let content = toks.filter((t) => !STOP.has(t));
+    if (!content.length) content = toks;
+    const expansions = new Set();
+    const groups = content.map((q) => {
+      const vs = [{ term: q, w: 1 }];
+      const seen = new Set([q]);
+      SYN.forEach((g) => {
+        if (g.some((m) => synHit(q, m))) {
+          g.forEach((m) => { if (!m.includes(' ') && !seen.has(m)) { seen.add(m); vs.push({ term: m, w: 0.8 }); expansions.add(m); } });
+        }
+      });
+      return vs.map((v) => ({ w: v.w, matches: vocabMatches(v.term, v.w < 1) }));
+    });
+    const out = [];
+    for (const e of IDX) {
+      let sum = 0, matched = 0;
+      const hits = new Set();
+      for (const vs of groups) {
+        let best = 0;
+        for (const f of e.f) {
+          for (const t of f.tokens) {
+            for (const v of vs) {
+              const q = v.matches.get(t);
+              if (q) { hits.add(t); const sc = f.w * v.w * q; if (sc > best) best = sc; }
+            }
+          }
+        }
+        if (best > 0) { matched++; sum += best; }
+      }
+      let bonus = 0;
+      if (qn.length >= 4) {
+        for (const tag of e.tags) {
+          let b = 0;
+          if (tag === qn) b = 40;
+          else if (tag.length >= 5 && (' ' + qn + ' ').includes(' ' + tag + ' ')) b = 18 + tag.length * 0.3;
+          else if (qn.length >= 5 && tag.includes(qn)) b = 14;
+          if (b > bonus) bonus = b;
+        }
+        for (const f of e.f) { if ((f.k === 'titulo' || f.k === 'clienteDice') && f.n.includes(qn)) { bonus += 12; break; } }
+      }
+      if (!matched && !bonus) continue;
+      const cov = matched / groups.length;
+      if (!bonus && groups.length >= 3 && cov < 0.5) continue;
+      const score = sum * Math.pow(cov, 1.5) + bonus;
+      if (score < 3) continue;
+      out.push({ s: e.s, score, hits });
+    }
+    out.sort((a, b) => b.score - a.score);
+    const top = out.length ? out[0].score : 0;
+    const res = out.filter((r) => r.score >= top * 0.2).slice(0, 30);
+    const allHits = new Set(); res.forEach((r) => r.hits.forEach((h) => allHits.add(h)));
+    return { raw, qn, results: res, hits: { terms: allHits, phrase: qn.includes(' ') ? qn : '' }, expansions: Array.from(expansions).filter((x) => allHits.has(x)).slice(0, 6) };
+  }
+
+  /* ---------- Resaltado + marcadores de datos variables ---------- */
+  function ranges(text, H) {
+    if (!H || !text || (!H.terms.size && !H.phrase)) return [];
+    const n = normChars(text); const out = [];
+    const re = /[a-z0-9]+/g; let m;
+    const words = [];
+    while ((m = re.exec(n))) {
+      words.push([m.index, m.index + m[0].length, m[0]]);
+      if (H.terms.has(m[0])) out.push([m.index, m.index + m[0].length]);
+    }
+    if (H.phrase) {
+      // Frase completa (incluye palabras cortas como «no», «ya», «yo»)
+      const pw = H.phrase.split(' ');
+      for (let i = 0; i + pw.length <= words.length; i++) {
+        let ok = true;
+        for (let k = 0; k < pw.length; k++) { if (words[i + k][2] !== pw[k]) { ok = false; break; } }
+        if (ok) out.push([words[i][0], words[i + pw.length - 1][1]]);
+      }
+    }
+    out.sort((a, b) => a[0] - b[0]);
+    const merged = [];
+    for (const r of out) {
+      const last = merged[merged.length - 1];
+      if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]); else merged.push([r[0], r[1]]);
+    }
+    return merged;
+  }
+  function rich(text, H) {
+    text = String(text || '');
+    const rs = ranges(text, H);
+    let s = '', last = 0;
+    for (const [a, b] of rs) { s += text.slice(last, a) + '\u0001' + text.slice(a, b) + '\u0002'; last = b; }
+    s += text.slice(last);
+    s = esc(s).replace(/\[([^\]]+)\]/g, (m0, inner) => {
+      const plain = inner.replace(/[\u0001\u0002]/g, '');
+      return '<span class="ph" title="Dato a completar">' + inner + '</span>';
+    });
+    return s.replace(/\u0001/g, '<mark>').replace(/\u0002/g, '</mark>');
+  }
+  function snippet(text, H, max) {
+    max = max || 150;
+    const rs = ranges(text, H);
+    if (!rs.length) return null;
+    let start = 0;
+    if (text.length > max) start = Math.max(0, Math.min(rs[0][0] - 40, text.length - max));
+    if (start > 0) { const sp = text.indexOf(' ', start); if (sp > -1 && sp < rs[0][0]) start = sp + 1; }
+    let end = Math.min(text.length, start + max);
+    if (end < text.length) { const sp = text.lastIndexOf(' ', end); if (sp > start + 40) end = sp; }
+    return (start > 0 ? '…' : '') + rich(text.slice(start, end), H) + (end < text.length ? '…' : '');
+  }
+
+  /* ---------- Estado y rutas ---------- */
+  const st = { route: 'home', cat: 'objeciones', sel: null, q: '', res: null, kb: -1, view: 'detail' };
+  const nav = $('#nav'), list = $('#list'), detail = $('#detail'), qInput = $('#q'), clearBtn = $('.s-clear');
+  const isNarrow = () => window.matchMedia('(max-width: 759px)').matches;
+
+  function parseHash() {
+    const h = decodeURIComponent(location.hash.replace(/^#\/?/, ''));
+    const [a, b] = h.split('/');
+    if (a === 'c' && CAT[b]) return { route: 'cat', cat: b };
+    if (a === 'e' && SC[b]) return { route: 'esc', id: b };
+    return { route: 'home' };
+  }
+  function applyHash() {
+    const r = parseHash();
+    st.route = r.route;
+    if (r.route === 'cat') { st.cat = r.cat; st.sel = null; st.view = 'list'; }
+    else if (r.route === 'esc') { st.sel = r.id; if (!st.res) st.cat = SC[r.id].categoria; st.view = 'detail'; }
+    else { st.sel = null; st.view = 'detail'; }
+    renderAll(true);
+  }
+
+  /* ---------- Copiar ---------- */
+  let COPY = [];
+  function copyBtn(text, small, label) {
+    const i = COPY.push(String(text)) - 1;
+    const l = label || (small ? 'Copiar' : 'Copiar script');
+    return '<button type="button" class="copy' + (small ? ' sm' : '') + '" data-ci="' + i + '" data-l="' + esc(l) + '">' + ic('copy') + '<span>' + esc(l) + '</span></button>';
+  }
+  async function copyText(t) {
+    try { await navigator.clipboard.writeText(t); return true; } catch (e) {
+      try {
+        const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+        const ok = document.execCommand('copy'); document.body.removeChild(ta); return ok;
+      } catch (e2) { return false; }
+    }
+  }
+  let toastT;
+  function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1700); }
+  document.addEventListener('click', async (ev) => {
+    const b = ev.target.closest('.copy');
+    if (!b) return;
+    const ok = await copyText(COPY[+b.dataset.ci] || '');
+    if (ok) {
+      b.classList.add('done'); b.querySelector('span').textContent = 'Copiado'; b.querySelector('svg').innerHTML = P.ok;
+      toast('Script copiado');
+      setTimeout(() => { b.classList.remove('done'); b.querySelector('span').textContent = b.dataset.l; b.querySelector('svg').innerHTML = P.copy; }, 1600);
+    } else { toast('No se pudo copiar: selecciona el texto y usa Ctrl+C'); }
+  });
+
+  /* ---------- Render: navegación ---------- */
+  function renderNav() {
+    const cur = st.res ? null : (st.route === 'home' ? 'home' : st.cat);
+    let h = '<a class="nav-item" href="#/" ' + (cur === 'home' ? 'aria-current="true"' : '') + '>' + ic('home') + '<span>Inicio</span></a>';
+    h += '<div class="nav-sep" role="separator"></div>';
+    D.categorias.forEach((c) => {
+      h += '<a class="nav-item" href="#/c/' + c.id + '" ' + (cur === c.id ? 'aria-current="true"' : '') + '>' + ic(c.icono) + '<span>' + esc(c.nombre) + '</span><span class="n">' + (BY[c.id] || []).length + '</span></a>';
+    });
+    nav.innerHTML = h;
+  }
+
+  /* ---------- Render: lista ---------- */
+  function rowHTML(s, extra) {
+    extra = extra || {};
+    const cur = st.sel === s.id ? ' aria-current="true"' : '';
+    const sub = s.arquetipo || s.situacion || '';
+    let badges = '';
+    if (s.insignia) badges += '<span class="badge ' + (s.insignia === 'Caso especial' ? 'esp' : 'g3m') + '">' + esc(s.insignia) + '</span>';
+    return '<a class="row' + (extra.kb ? ' kb' : '') + '" href="#/e/' + s.id + '" data-id="' + s.id + '"' + cur + '>' +
+      (extra.path ? '<span class="row-path">' + ic(CAT[s.categoria].icono) + esc(CAT[s.categoria].nombre) + '</span>' : '') +
+      '<span class="row-t">' + rich(s.titulo, extra.H) + '</span>' +
+      (extra.snip ? '<span class="row-snip">' + extra.snip + '</span>' : (sub ? '<span class="row-s">' + rich(sub, extra.H) + '</span>' : '')) +
+      (badges ? '<span class="badges">' + badges + '</span>' : '') + '</a>';
+  }
+  function bestSnippet(s, H) {
+    const cands = [].concat(arr(s.clienteDice), [sText(s.respuesta), s.arquetipo || '', s.situacion || ''], arr(s.alternativas).map(sText), [sText(s.firme)], arr(s.cierre).map(sText), collect(s).scripts, collect(s).otros);
+    for (const t of cands) { if (!t) continue; const sn = snippet(t, H); if (sn) return sn; }
+    for (const tag of arr(s.etiquetas)) { if (ranges(tag, H).length) return 'Coincide con «' + rich(tag, H) + '»'; }
+    return null;
+  }
+  function renderList() {
+    COPY = COPY || [];
+    let h = '';
+    if (st.res) {
+      const R = st.res, H = R.hits;
+      h += '<div class="list-head"><h2>' + (R.results.length ? R.results.length + (R.results.length === 1 ? ' resultado' : ' resultados') : 'Sin resultados') + '</h2>' +
+        '<p>Para «' + esc(R.raw.trim()) + '»</p>' +
+        (R.expansions.length ? '<p class="syn">También busqué: ' + R.expansions.map(esc).join(', ') + '</p>' : '') + '</div>';
+      if (!R.results.length) {
+        h += '<div class="empty"><p>Prueba con otra palabra o con lo que dice el cliente. Por ejemplo:</p><div class="chips">' +
+          D.accesosRapidos.slice(0, 6).map((a) => '<button type="button" class="chip" data-q="' + esc(a.texto) + '">' + esc(a.texto) + '</button>').join('') + '</div></div>';
+      } else {
+        R.results.forEach((r, i) => { h += rowHTML(r.s, { path: true, H, snip: bestSnippet(r.s, H), kb: i === st.kb }); });
+      }
+    } else {
+      const c = CAT[st.cat];
+      h += '<div class="list-head"><h2>' + esc(c.nombre) + '</h2><p>' + esc(c.descripcion) + '</p></div>';
+      (BY[c.id] || []).forEach((s) => { h += rowHTML(s); });
+    }
+    list.innerHTML = h;
+    const curRow = list.querySelector('.row[aria-current="true"], .row.kb');
+    if (curRow) { const lr = list.getBoundingClientRect(), rr = curRow.getBoundingClientRect(); if (rr.top < lr.top + 80 || rr.bottom > lr.bottom) curRow.scrollIntoView({ block: 'nearest' }); }
+  }
+
+  /* ---------- Render: detalle ---------- */
+  function scriptBlock(cls, title, x, H, opts) {
+    const o = sObj(x); if (!o || !o.texto) return '';
+    return '<section class="blk ' + cls + '"><div class="blk-h"><h3>' + esc(title) + '</h3>' + copyBtn(o.texto, false) + '</div>' +
+      (o.etiqueta ? '<span class="tag-lbl">' + esc(o.etiqueta) + '</span>' : '') +
+      '<p class="script">' + rich(o.texto, H) + '</p>' + (o.nota ? '<p class="note">' + rich(o.nota, H) + '</p>' : '') + ((opts && opts.after) || '') + '</section>';
+  }
+  function subItems(items, H) {
+    return items.map((x) => {
+      const o = sObj(x); if (!o) return '';
+      return '<div class="sub"><div class="sub-row"><div>' + (o.etiqueta ? '<span class="tag-lbl">' + esc(o.etiqueta) + '</span>' : '') +
+        '<p class="script sm">' + rich(o.texto, H) + '</p>' + (o.nota ? '<p class="note">' + rich(o.nota, H) + '</p>' : '') +
+        (o.ir && SC[o.ir] ? '<a class="go" href="#/e/' + o.ir + '">Ver: ' + esc(SC[o.ir].titulo) + ' ' + ic('arrow') + '</a>' : '') +
+        '</div>' + copyBtn(o.texto, true) + '</div></div>';
+    }).join('');
+  }
+  function linkPills(ids) {
+    return '<div class="links">' + ids.filter((id) => SC[id]).map((id) => '<a class="pill" href="#/e/' + id + '">' + esc(SC[id].titulo) + '</a>').join('') + '</div>';
+  }
+  function renderBloque(b, H) {
+    let h = '';
+    if (b.tipo === 'pasos') {
+      h += '<section class="card">' + (b.titulo ? '<h3 class="lbl">' + esc(b.titulo) + '</h3>' : '') + '<ol class="steps">';
+      arr(b.items).forEach((it) => {
+        h += '<li><h4>' + rich(it.titulo, H) + '</h4>';
+        if (arr(it.puntos).length) h += '<ul>' + it.puntos.map((p) => '<li>' + rich(p, H) + '</li>').join('') + '</ul>';
+        if (it.texto) h += '<div class="stx"><div class="sub-row"><p class="script sm">' + rich(it.texto, H) + '</p>' + copyBtn(it.texto, true) + '</div></div>';
+        if (it.ir && SC[it.ir]) h += '<a class="go" href="#/e/' + it.ir + '">Ver: ' + esc(SC[it.ir].titulo) + ' ' + ic('arrow') + '</a>';
+        h += '</li>';
+      });
+      h += '</ol></section>';
+    } else if (b.tipo === 'frases') {
+      h += '<section class="card frases">' + (b.titulo ? '<h3 class="lbl">' + esc(b.titulo) + '</h3>' : '') + subItems(arr(b.items), H) + '</section>';
+    } else if (b.tipo === 'lista') {
+      h += '<section class="card">' + (b.titulo ? '<h3 class="lbl">' + esc(b.titulo) + '</h3>' : '') + '<ul class="plain">' + arr(b.items).map((p) => '<li>' + rich(p, H) + '</li>').join('') + '</ul></section>';
+    } else if (b.tipo === 'guia') {
+      h += '<section class="card">' + (b.titulo ? '<h3 class="lbl">' + esc(b.titulo) + '</h3>' : '');
+      arr(b.items).forEach((g) => {
+        h += '<div class="guia-row"><div class="g-si"><div class="sub-row"><div><div class="g-h">' + ic('ok') + 'Sí decir</div><div class="g-txt">' + rich(g.si, H) + '</div></div>' + copyBtn(g.si, true) + '</div></div>' +
+          '<div class="g-no"><div class="g-h">' + ic('x') + 'No decir</div><div class="g-txt">' + rich(g.no, H) + '</div></div>' +
+          '<div class="g-pq"><b>Por qué:</b> ' + rich(g.porque, H) + '</div></div>';
+      });
+      h += '</section>';
+    }
+    return h;
+  }
+  function renderAviso(a, H) {
+    const icon = a.tipo === 'especial' ? 'alert' : a.tipo === 'importante' ? 'shield' : 'info';
+    let h = '<section class="aviso ' + (a.tipo || 'nota') + '"><h3>' + ic(icon) + rich(a.titulo || '', H) + '</h3>';
+    if (a.texto) h += '<p>' + rich(a.texto, H) + '</p>';
+    if (arr(a.pasos).length) h += '<ol>' + a.pasos.map((p) => '<li>' + rich(p, H) + '</li>').join('') + '</ol>';
+    if (a.frase) { const o = sObj(a.frase); h += '<div class="frase"><div class="sub-row"><p class="script sm">' + rich(o.texto, H) + '</p>' + copyBtn(o.texto, true) + '</div></div>'; }
+    return h + '</section>';
+  }
+
+  function renderDetail() {
+    COPY = [];
+    if (!st.sel) { detail.innerHTML = renderHome(); return; }
+    const s = SC[st.sel], c = CAT[s.categoria];
+    const H = st.res ? st.res.hits : null;
+    let h = '<div class="d">';
+    h += '<button type="button" class="icon-btn back" data-back>' + ic('back') + '<span>' + (st.res ? 'Volver a resultados' : 'Volver a ' + esc(c.nombre)) + '</span></button>';
+    h += '<nav class="crumbs" aria-label="Ruta"><a href="#/c/' + c.id + '">' + esc(c.nombre) + '</a><span aria-hidden="true">›</span><span>' + esc(s.titulo) + '</span></nav>';
+    h += '<h1 class="d-title" tabindex="-1">' + rich(s.titulo, H) + '</h1>';
+    if (s.arquetipo) h += '<p class="arq">Arquetipo: <b>' + rich(s.arquetipo, H) + '</b></p>';
+    if (s.insignia) h += '<div class="badges"><span class="badge ' + (s.insignia === 'Caso especial' ? 'esp' : 'g3m') + '">' + esc(s.insignia) + '</span></div>';
+    if (s.situacion) h += '<p class="sit">' + rich(s.situacion, H) + '</p>';
+
+    arr(s.avisos).filter((a) => a.tipo === 'especial' || a.tipo === 'importante').forEach((a) => { h += renderAviso(a, H); });
+
+    if (arr(s.clienteDice).length) {
+      h += '<section class="sec"><h3 class="lbl">Lo que dice el cliente</h3><div class="quotes">' + s.clienteDice.map((q) => '<span class="quote">' + rich(q, H) + '</span>').join('') + '</div></section>';
+    }
+    if (arr(s.aplicaEn).length) h += '<section class="sec"><h3 class="lbl">Úsala con estas objeciones</h3>' + linkPills(s.aplicaEn) + '</section>';
+
+    h += scriptBlock('resp', s.categoria === 'consecuencias' ? 'Cómo comunicarla' : s.categoria === 'terceros' ? 'Script' : 'Respuesta modelo', s.respuesta, H);
+    arr(s.avisos).filter((a) => a.tipo !== 'especial' && a.tipo !== 'importante').forEach((a) => { h += renderAviso(a, H); });
+
+    if (arr(s.alternativas).length) {
+      h += '<section class="blk alt"><div class="blk-h"><h3>Otra forma de decirlo</h3></div>' + subItems(arr(s.alternativas), H) + '</section>';
+    }
+    if (s.contraste) h += scriptBlock('cont', 'Contraste con la extensión', s.contraste, H);
+
+    if (s.firme != null) h += scriptBlock('firm', 'Variante firme (mora alta)', s.firme, H);
+    else if (s.firmeNota) h += '<section class="blk firm"><div class="blk-h"><h3>Variante firme (mora alta)</h3></div><p class="script sm">' + rich(s.firmeNota, H) + '</p></section>';
+    if (s.soloG3) {
+      const g = sObj(s.soloG3);
+      h += '<section class="blk g3b"><div class="blk-h"><h3><span class="g3-tag">Solo G3</span>' + esc(g.etiqueta || 'Con fundamento legal') + '</h3>' + copyBtn(g.texto, false) + '</div>' +
+        '<p class="script">' + rich(g.texto, H) + '</p><p class="note">' + rich(g.nota || 'Fuera de G3, usa la respuesta modelo, sin citar el artículo.', H) + '</p></section>';
+    }
+
+    arr(s.bloques).forEach((b) => { h += renderBloque(b, H); });
+
+    if (arr(s.noDecir).length) {
+      h += '<section class="blk nod"><div class="blk-h"><h3>Qué no decir</h3></div><ul>' +
+        s.noDecir.map((n) => '<li><span class="x" aria-hidden="true">✕</span><span class="f">' + rich(n.frase, H) + '</span>' + (n.porque ? '<span class="w">' + rich(n.porque, H) + '</span>' : '') + '</li>').join('') + '</ul></section>';
+    }
+
+    const cierre = arr(s.cierre);
+    const checks = '<div class="checks"><span>' + ic('ok') + 'Fecha</span><span>' + ic('ok') + 'Hora</span><span>' + ic('ok') + 'Monto</span><span>' + ic('ok') + 'Medio de pago</span></div>';
+    const cLbl = s.cierreTitulo || (s.categoria === 'objeciones' ? 'Cierre: pago en la llamada' : s.categoria === 'terceros' ? 'Cierre: recado para el titular' : 'Cierre: pide fecha y hora');
+    const cChecks = (s.categoria === 'terceros' || s.cierreTitulo) ? '' : checks;
+    if (cierre.length === 1) h += scriptBlock('clos', cLbl, cierre[0], H, { after: cChecks });
+    else if (cierre.length > 1) h += '<section class="blk clos"><div class="blk-h"><h3>' + cLbl + '</h3></div>' + subItems(cierre, H) + cChecks + '</section>';
+
+
+    if (arr(s.relacionados).length) h += '<section class="sec"><h3 class="lbl">Ver también</h3>' + linkPills(s.relacionados) + '</section>';
+    h += '</div>';
+    detail.innerHTML = h;
+  }
+
+  function renderHome() {
+    const flujo = SC['flujo-llamada'];
+    const pasos = flujo && flujo.bloques ? flujo.bloques[0].items : [];
+    let h = '<div class="d home">';
+    h += '<h1>¿Qué te está diciendo el cliente?</h1><p class="lead">Escribe arriba lo que dice o elige una frase.</p>';
+    h += '<div class="chips">' + D.accesosRapidos.filter((a) => SC[a.id]).map((a) => '<a class="chip" href="#/e/' + a.id + '">' + esc(a.texto) + '</a>').join('') + '</div>';
+    if (pasos.length) {
+      h += '<section class="sec" style="margin-top:30px"><h3 class="lbl">Flujo de la llamada</h3><ol class="flow">' +
+        pasos.map((p) => '<li><a href="#/e/' + (p.ir && SC[p.ir] ? p.ir : 'flujo-llamada') + '">' + esc(p.titulo) + '</a></li>').join('') + '</ol></section>';
+    }
+    if (arr(D.recordatorios).length) {
+      h += '<section class="card" style="margin-top:26px"><h3 class="lbl">Siempre</h3><ul class="remind">' +
+        D.recordatorios.map((r) => '<li><a href="#/e/' + r.ir + '">' + ic('check') + '<span>' + esc(r.texto) + '</span></a></li>').join('') + '</ul></section>';
+    }
+    h += '<div class="g3-box">' + ic('info') + '<div><p><b>' + esc(D.meta.aviso) + '</b></p>' +
+      '</div></div>';
+    return h + '</div>';
+  }
+
+  function renderAll(fromHash) {
+    document.body.classList.toggle('v-list', st.view === 'list');
+    renderNav(); renderList(); renderDetail();
+    if (fromHash) detail.scrollTop = 0;
+  }
+
+  /* ---------- Búsqueda en tiempo real ---------- */
+  let qt;
+  function runSearch() {
+    const v = qInput.value;
+    clearBtn.classList.toggle('on', !!v);
+    const r = search(v);
+    st.res = r; st.kb = r && r.results.length ? 0 : -1;
+    if (r) {
+      if (isNarrow()) { st.view = 'list'; }
+      else if (r.results.length) { st.sel = r.results[0].s.id; history.replaceState(null, '', '#/e/' + st.sel); }
+    } else {
+      st.kb = -1;
+      if (st.sel) st.cat = SC[st.sel].categoria;
+      if (isNarrow() && !st.sel) st.view = st.route === 'home' ? 'detail' : 'list';
+    }
+    renderNav(); renderList(); renderDetail();
+    document.body.classList.toggle('v-list', st.view === 'list');
+    detail.scrollTop = 0;
+  }
+  qInput.addEventListener('input', () => { clearTimeout(qt); qt = setTimeout(runSearch, 70); });
+  qInput.addEventListener('keydown', (e) => {
+    const R = st.res;
+    if (e.key === 'Escape') { e.preventDefault(); clearSearch(); return; }
+    if (!R || !R.results.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      st.kb = (st.kb + (e.key === 'ArrowDown' ? 1 : -1) + R.results.length) % R.results.length;
+      if (!isNarrow()) { st.sel = R.results[st.kb].s.id; history.replaceState(null, '', '#/e/' + st.sel); renderDetail(); detail.scrollTop = 0; }
+      renderList();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const id = R.results[Math.max(0, st.kb)].s.id;
+      st.sel = id; st.view = 'detail';
+      history.replaceState(null, '', '#/e/' + id);
+      renderAll(true);
+      if (isNarrow()) qInput.blur();
+    }
+  });
+  function clearSearch() {
+    qInput.value = ''; clearBtn.classList.remove('on');
+    st.res = null; st.kb = -1;
+    if (st.sel) st.cat = SC[st.sel].categoria;
+    renderAll(false);
+  }
+  clearBtn.addEventListener('click', () => { clearSearch(); qInput.focus(); });
+
+  document.addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-q]');
+    if (chip) { qInput.value = chip.dataset.q; runSearch(); qInput.focus(); return; }
+    if (e.target.closest('[data-back]')) {
+      if (st.res) { st.view = 'list'; document.body.classList.add('v-list'); renderList(); }
+      else location.hash = '#/c/' + SC[st.sel].categoria;
+      return;
+    }
+    const row = e.target.closest('a.row');
+    if (row && st.res) {
+      // Mantener la búsqueda activa al abrir un resultado
+      e.preventDefault();
+      st.sel = row.dataset.id; st.view = 'detail';
+      st.kb = st.res.results.findIndex((r) => r.s.id === st.sel);
+      history.replaceState(null, '', '#/e/' + st.sel);
+      renderAll(true);
+    }
+  });
+  function leaveSearch(e) {
+    // Al elegir una categoría o inicio, se limpia la búsqueda
+    const a = e.target.closest('a');
+    if (!a) return;
+    if (st.res) { qInput.value = ''; clearBtn.classList.remove('on'); st.res = null; st.kb = -1; }
+    if (a.getAttribute('href') === location.hash) { e.preventDefault(); applyHash(); }
+  }
+  nav.addEventListener('click', leaveSearch);
+  $('.brand').addEventListener('click', leaveSearch);
+
+  document.addEventListener('keydown', (e) => {
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+    if ((e.key === '/' && !typing) || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
+      e.preventDefault(); qInput.focus(); qInput.select();
+    }
+  });
+
+  /* ---------- Tema claro / oscuro ---------- */
+  const themeBtn = $('#theme');
+  function effTheme() {
+    const a = document.documentElement.getAttribute('data-theme');
+    if (a) return a;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function paintThemeBtn() {
+    const dark = effTheme() === 'dark';
+    themeBtn.innerHTML = ic(dark ? 'sun' : 'moon') + '<span class="t">' + (dark ? 'Modo claro' : 'Modo oscuro') + '</span>';
+    themeBtn.setAttribute('aria-label', dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+  }
+  themeBtn.addEventListener('click', () => {
+    const next = effTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('ludoteca-tema', next); } catch (e) {}
+    paintThemeBtn();
+  });
+  try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paintThemeBtn); } catch (e) {}
+  paintThemeBtn();
+
+  function fitPlaceholder() {
+    qInput.placeholder = window.matchMedia('(max-width: 1023px)').matches
+      ? 'Lo que dice el cliente: «ya pagué»…'
+      : 'Escribe lo que dice el cliente: «no tengo dinero», «ya pagué», «no soy yo»…';
+  }
+  window.addEventListener('resize', fitPlaceholder);
+  fitPlaceholder();
+
+  window.addEventListener('hashchange', applyHash);
+  applyHash();
+})();
+</script>
+</body>
+</html>
